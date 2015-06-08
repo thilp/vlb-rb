@@ -43,7 +43,7 @@ class WikiFactory
       begin
         m_api, m_articles = nil, nil
         @httpc.get_content('http://' + domain) do |chunk|
-          m_api ||= %r{^<link rel="EditURI".+?href="(https?://[^/]+)([^"?]+)}.match chunk
+          m_api ||= %r{^<link rel="EditURI".+?href="((?:https?:)?//[^/]+)([^"?]+)}.match chunk
           m_articles ||= %r{^<link rel="alternate" hreflang="x-default" href="((/[^"/]+)+)/}.match chunk
           break if m_api && m_articles
         end
@@ -51,7 +51,8 @@ class WikiFactory
         raise "impossible de contacter #{domain}: #{err.message}"
       else
         if m_api
-          Wiki.new m_api[1], m_api[2], (m_articles ? m_articles[1] : ''), self
+          url = m_api[1].start_with?('//') ? 'https:' + m_api[1] : m_api[1]
+          Wiki.new url, m_api[2], (m_articles ? m_articles[1] : ''), self
         else
           raise "impossible de trouver l'API de #{domain}"
         end
@@ -60,6 +61,11 @@ class WikiFactory
   end
 end
 
+class Escaper
+  def self.transform(name, value)
+    Addressable::URI.escape(value)
+  end
+end
 
 class Wiki
   attr_reader :base_url, :factory
@@ -80,7 +86,7 @@ class Wiki
   end
 
   def article_url(pagename)
-    @article_template.expand article: pagename
+    @article_template.expand({article: pagename}, Escaper)
   end
 
   def https?
