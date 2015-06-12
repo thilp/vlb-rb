@@ -1,4 +1,5 @@
 require 'cinch/formatting'
+require 'cinch/logger'
 require 'httpclient'
 require 'jsonclient'
 require 'addressable/uri'
@@ -6,9 +7,11 @@ require 'addressable/template'
 
 class WikiFactory
 
-  attr_reader :httpc, :jsonc, :wikis
+  attr_reader :httpc, :jsonc, :wikis, :loggers
 
-  def initialize
+  # @param [Cinch::LoggerList] loggers
+  def initialize(loggers)
+    @loggers = loggers
     @httpc = HTTPClient.new
     @jsonc = JSONClient.new
     [@httpc, @jsonc].each do |c|
@@ -37,12 +40,14 @@ class WikiFactory
   end
 
   def new_from_domain(domain)
+    loggers.info "Creating new Wiki object for domain #{domain}"
     if domain.end_with? '.vikidia.org', '.wikipedia.org'
       Wiki.new "https://#{domain}", '/w/api.php', '/wiki', self
     else
       begin
         m_api, m_articles = nil, nil
         @httpc.get_content('http://' + domain) do |chunk|
+          chunk.scrub! '<?INVALID ENCODING!?>'
           m_api ||= %r{^<link rel="EditURI".+?href="((?:https?:)?//[^/]+)([^"?]+)}.match chunk
           m_articles ||= %r{^<link rel="alternate" hreflang="x-default" href="((/[^"/]+)+)/}.match chunk
           break if m_api && m_articles
@@ -54,7 +59,11 @@ class WikiFactory
           url = m_api[1].start_with?('//') ? 'https:' + m_api[1] : m_api[1]
           Wiki.new url, m_api[2], (m_articles ? m_articles[1] : ''), self
         else
-          raise "impossible de trouver l'API de #{domain}"
+          if @httpc.get('http://' + domain + '/w/api.php').ok?  # last chance!
+            Wiki.new('http://' + domain, '/w/api.php', '/wiki', self)
+          else
+            raise "impossible de trouver l'API de #{domain}"
+          end
         end
       end
     end
@@ -80,6 +89,7 @@ class Wiki
   def api(params_hash)
     method = params_hash.key?(:method) ? params_hash.delete(:method) : :get
     params_hash[:format] = 'json'
+    factory.loggers.info "Sending API request: url=#{@api_url}, parameters=#{params_hash}"
     res = @factory.jsonc.request(method, @api_url, params_hash)
     raise "#{res.status} #{res.reason}" unless res.ok?
     res.content

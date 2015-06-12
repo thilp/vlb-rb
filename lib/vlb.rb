@@ -3,6 +3,7 @@ require 'cinch'
 require 'httpclient'
 require 'addressable/uri'
 require 'damerau-levenshtein'
+require 'facets/string/titlecase'
 require 'wiki'
 
 class VikiLinkBot
@@ -20,7 +21,7 @@ class VikiLinkBot
   def initialize(bot)
     super
     @httpc = HTTPClient.new
-    @wikis = WikiFactory.new
+    @wikis = WikiFactory.new(@bot.loggers)
 
     # Allowing https->http redirects, which are bad but nevertheless currently performed by *.vikidia.org
     @httpc.redirect_uri_callback = ->(_uri, res) { res.header['location'][0] }
@@ -66,8 +67,14 @@ class VikiLinkBot
           wiki = wikis.get(domain)
           answer = wiki.api action: 'query', meta: 'siteinfo', siprop: query.first
           unless answer['query']
-            return "Désolé ! Soit la propriété #{query.first} n'existe pas, soit #{wiki.domain} refuse de partager." +
-                " Essayez plutôt #{wiki.article_url('Special:Version')} !"
+            return 'Désolé ! ' + case answer['warnings']['siteinfo']['*']
+                     when "The ``siteinfo'' module has been disabled."
+                       "#{wiki.domain} ne rend pas ces informations publiques. Essayez plutôt #{wiki.article_url('Special:Version')}"
+                     when /^Unrecognized value for parameter 'siprop': (.+)$/
+                       "La propriété #{query.first} n'existe pas. Les propriétés connues sont listées sur http://www.mediawiki.org/wiki/API:Siteinfo"
+                     else
+                       "La requête a échoué, MediaWiki a répondu : #{answer['warnings']['siteinfo']['*']}"
+            end
           end
 
           data = answer['query']
@@ -238,7 +245,11 @@ class VikiLinkBot
                when String # just return the string
                  recipe
                when Proc # returns the proc's result
-                 recipe.call(rest, m)
+                 begin
+                   recipe.call(rest, m)
+                 rescue => err
+                   "Dommage ! #{err.message.capitalize} !"
+                 end
                when nil # tries to guess what existing command was targeted
                  guesses = guess(cmd, @commands.keys).map { |g| self.class.cmd_prefix + g.to_s }
                  guesses.empty? ? nil : "Vouliez-vous dire #{join_multiple guesses} ?"
