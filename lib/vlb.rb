@@ -10,7 +10,7 @@ class VikiLinkBot
 
   attr_reader :httpc, :wikis # Web clients
 
-  @version = 1
+  @version = '1.1'
   @cmd_prefix = '!'
 
   class << self
@@ -240,7 +240,7 @@ class VikiLinkBot
                when Proc # returns the proc's result
                  recipe.call(rest, m)
                when nil # tries to guess what existing command was targeted
-                 guesses = guess(cmd, @commands.keys).map { |g| self.class.cmd_prefix + g }
+                 guesses = guess(cmd, @commands.keys).map { |g| self.class.cmd_prefix + g.to_s }
                  guesses.empty? ? nil : "Vouliez-vous dire #{join_multiple guesses} ?"
                else
                  raise "got unexpected recipe type #{recipe.class} for command #{cmd}"
