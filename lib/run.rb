@@ -22,6 +22,8 @@ end
 bot = Cinch::Bot.new do
   configure do |c|
     c.nick = options[:nick]
+    c.user = 'vlb-rb'
+    c.realname = 'vlb-rb'
     c.password = options[:password] if options[:password]
     c.server = options[:server]
     c.channels = options[:chans]
