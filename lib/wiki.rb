@@ -97,7 +97,7 @@ class Wiki
 
   def article_url(pagename)
     pagename = Addressable::URI.encode_component(pagename, Addressable::URI::CharacterClasses::PATH)
-    pagename.gsub!(/['*$]/) { |c| '%' + c.ord.to_s(16) }
+    pagename.gsub!(/['*$()]/) { |c| '%' + c.ord.to_s(16) }
     @article_template.expand({article: pagename}, DummyEscaper)
   end
 
