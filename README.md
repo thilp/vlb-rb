@@ -34,6 +34,8 @@ La plus simple est `!version`, ce à quoi le robot répond en affichant son nom 
 
 ### Simples liens
 
+* `!aide` (cette page)
+
 vlb-rb répondra aux commandes suivantes en retournant l'URL correspondante pour fr.vikidia.org :
 * `!alerte` (page d'alerte)
 * `!ba` (bulletin des administrateurs)
