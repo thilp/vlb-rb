@@ -3,7 +3,6 @@ require 'cinch'
 require 'httpclient'
 require 'addressable/uri'
 require 'damerau-levenshtein'
-require 'facets/string/titlecase'
 require 'wiki'
 
 class VikiLinkBot

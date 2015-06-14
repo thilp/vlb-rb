@@ -70,9 +70,9 @@ class WikiFactory
   end
 end
 
-class Escaper
+class DummyEscaper
   def self.transform(name, value)
-    Addressable::URI.escape(value)
+    value
   end
 end
 
@@ -96,7 +96,9 @@ class Wiki
   end
 
   def article_url(pagename)
-    @article_template.expand({article: pagename}, Escaper)
+    pagename = Addressable::URI.encode_component(pagename, Addressable::URI::CharacterClasses::PATH)
+    pagename.gsub!(/['*$]/) { |c| '%' + c.ord.to_s(16) }
+    @article_template.expand({article: pagename}, DummyEscaper)
   end
 
   def https?
