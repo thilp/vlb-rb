@@ -39,6 +39,7 @@ class VikiLinkBot
         savant: 'https://fr.vikidia.org/wiki/Vikidia:Le_Savant',
         tickets: 'https://fr.vikidia.org/wiki/Vikidia:Tickets',
         version: "VikiLinkBot-rb #{self.class.version}",
+        aide: 'https://github.com/thilp/vlb-rb',
 
         # Lambdas for customization
 
