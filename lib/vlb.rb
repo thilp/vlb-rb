@@ -260,7 +260,7 @@ class VikiLinkBot
   end
 
   def execute_wikilinks(m)
-    wikilinks = wikilinks_in m.message
+    wikilinks = wikilinks_in expand_braces(m.message)
     update_wikilink_states(wikilinks)
     m.reply wikilinks.join(' · ')
   end
@@ -295,6 +295,20 @@ class VikiLinkBot
       states = wiki.page_states(*link_list.map(&:pagename))
       link_list.each { |link| link.state = states[link.pagename] }
     end
+  end
+
+  # @param [String] str
+  # @return [String]
+  def expand_braces(str)
+    new_str = str
+    loop do
+      tmp = new_str.gsub /(\S*) \{ ( [^,\}]* (?: , [^,\}]* )+ ) \} (\S*)/x do
+        $2.split(',').map { |t| $1 + t + $3 }.join(' ')
+      end
+      break if tmp == new_str
+      new_str = tmp
+    end
+    new_str
   end
 
 end
