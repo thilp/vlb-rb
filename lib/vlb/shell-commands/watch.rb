@@ -9,6 +9,10 @@ module VikiLinkBot
         m.reply "Usage : !#{__method__} <description> <canal> <conditions>"
         return
       end
+      unless m.channel.voiced?(m.user)
+        m.reply 'Désolé, seuls les utilisateurs en +v peuvent utiliser cette commande.'
+        return
+      end
 
       watch_name = tokens.shift
 
@@ -42,6 +46,10 @@ module VikiLinkBot
     def unwatch(m, tokens)
       if tokens.empty?
         m.reply "Usage : !#{__method__} <description>"
+        return
+      end
+      unless m.channel.voiced?(m.user)
+        m.reply 'Désolé, seuls les utilisateurs en +v peuvent utiliser cette commande.'
         return
       end
       desc = tokens.join(' ')
