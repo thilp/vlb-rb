@@ -7,11 +7,16 @@ require 'addressable/template'
 
 class WikiFactory
 
-  attr_reader :httpc, :jsonc, :wikis, :loggers
+  class << self
+    def instance  # WikiFactory is a singleton object
+      @instance = self.new unless @instance
+      @instance
+    end
+  end
 
-  # @param [Cinch::LoggerList] loggers
-  def initialize(loggers)
-    @loggers = loggers
+  attr_reader :httpc, :jsonc, :wikis
+
+  def initialize
     @httpc = HTTPClient.new
     @jsonc = JSONClient.new
     [@httpc, @jsonc].each do |c|
@@ -19,6 +24,7 @@ class WikiFactory
     end
     @wikis = {}
   end
+  private :initialize
 
   def get(domain=nil)
     domain = domain ? domain.chomp : ''
@@ -26,7 +32,7 @@ class WikiFactory
       domain = case domain
                  when ''
                    'fr.vikidia.org'
-                 when 'wp'
+                 when 'w', 'wp'
                    'fr.wikipedia.org'
                  when /^(\w+)wp$/, /^(simple)$/
                    "#{$1}.wikipedia.org"
@@ -40,7 +46,6 @@ class WikiFactory
   end
 
   def new_from_domain(domain)
-    loggers.info "Creating new Wiki object for domain #{domain}"
     if domain.end_with? '.vikidia.org', '.wikipedia.org'
       Wiki.new "https://#{domain}", '/w/api.php', '/wiki', self
     else
@@ -89,7 +94,6 @@ class Wiki
   def api(params_hash)
     method = params_hash.key?(:method) ? params_hash.delete(:method) : :get
     params_hash[:format] = 'json'
-    factory.loggers.info "Sending API request: url=#{@api_url}, parameters=#{params_hash}"
     res = @factory.jsonc.request(method, @api_url, params_hash)
     raise "#{res.status} #{res.reason}" unless res.ok?
     res.content
@@ -131,23 +135,23 @@ end
 
 
 class Wikilink
-  attr_reader :wiki, :pagename, :check
+  attr_reader :wiki, :pagename
   attr_accessor :state
 
   def initialize(wiki, pagename, check)
     @wiki = wiki
     @pagename = pagename
-    @check = check
+    @state = check ? 1 : 0
   end
 
   def to_s
     url = wiki.article_url(pagename)
-    if state
+    if state && state >= 200
       format = [[:green, '∃'], [:teal, '↳'], [:red, '∄'], [:orange, '?']][state / 100 - 2]
       prefix = Cinch::Formatting.format(format.first, format.last)
       "#{prefix} #{url}"
     else
-      url
+      url.to_s
     end
   end
 
