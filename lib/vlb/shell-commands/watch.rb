@@ -146,7 +146,7 @@ module VikiLinkBot
         key_parts = key.gsub(%r{ ^ / | / $ }x, '').split('/')
         raise LispParseError.new(%q{le nom "_json" n'est pas utilisable dans les conditions}) if key_parts.include?('_json')
         if value.start_with?('/')
-          value += tokens.shift until tokens.empty? || value.end_with?('/', '/i')
+          value += ' \\  ' + tokens.shift until tokens.empty? || value.end_with?('/', '/i')
           raise LispParseError.new("expression rationnelle non fermée pour #{key_parts.join('/')}") if tokens.empty?
           regex_opts = Regexp::EXTENDED
           if value.end_with?('/i')
@@ -160,7 +160,7 @@ module VikiLinkBot
           value = " == #{value}"
         else
           if value.start_with?('"')
-            value += tokens.shift until tokens.empty? || value.end_with?('"')
+            value += ' ' + tokens.shift until tokens.empty? || value.end_with?('"')
             raise LispParseError.new("chaîne de caractères non fermée pour #{key_parts.join('/')}") if tokens.empty?
           end
           value = " == #{value.inspect}"
