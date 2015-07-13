@@ -30,7 +30,7 @@ module VikiLinkBot
       log "Creating new watcher with constraints: #{constraints}"
 
       wid = VikiLinkBot::Watcher.register(
-          lambda { |m, _json| m.channel.name == chan_name && eval(constraints) },
+          lambda { |mm, _json| mm.channel.name == chan_name && eval(constraints) },
           lambda { |_, _json| m.reply "[watch] #{watch_name} (#{chan_name})"
                               m.reply "[watch] « #{_json['comment']} »" if _json['comment'] })
 
