@@ -9,8 +9,8 @@ module VikiLinkBot
         m.reply "Usage : !#{__method__} <description> <canal> <conditions>"
         return
       end
-      unless m.channel.voiced?(m.user)
-        m.reply 'Désolé, seuls les utilisateurs en +v peuvent utiliser cette commande.'
+      unless m.channel.voiced?(m.user) || m.channel.opped?(m.user)
+        m.reply 'Désolé, seuls les utilisateurs en +v ou +o peuvent utiliser cette commande.'
         return
       end
 
@@ -48,8 +48,8 @@ module VikiLinkBot
         m.reply "Usage : !#{__method__} <description>"
         return
       end
-      unless m.channel.voiced?(m.user)
-        m.reply 'Désolé, seuls les utilisateurs en +v peuvent utiliser cette commande.'
+      unless m.channel.voiced?(m.user) || m.channel.opped?(m.user)
+        m.reply 'Désolé, seuls les utilisateurs en +v ou +o peuvent utiliser cette commande.'
         return
       end
       desc = tokens.join(' ')
