@@ -94,6 +94,7 @@ class Wiki
   def api(params_hash)
     method = params_hash.key?(:method) ? params_hash.delete(:method) : :get
     params_hash[:format] = 'json'
+    puts "Wiki#api request to #{@api_url} with params #{params_hash}"
     res = @factory.jsonc.request(method, @api_url, params_hash)
     raise "#{res.status} #{res.reason}" unless res.ok?
     res.content

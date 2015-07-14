@@ -1,5 +1,4 @@
 require 'cinch'
-require 'shellwords'
 require 'httpclient'
 require 'vlb/utils'
 
@@ -16,19 +15,21 @@ module VikiLinkBot
 
     def self.split(str)
       tokens = str.scan %r{
-        \w+ (?: : (?: /(?: [^/\\]+ | \\. )*/ | "(?: [^"\\]+ | \\. )*" ) )? |
+        [\w/\{\},]+ (?: : (?: \w+ | \#[tf] | /(?: [^/\\]+ | \\. )*/ | "(?: [^"\\]+ | \\. )*" ) )? |
         \( | \) |
-        "(?: [^"\\]+ | \\. )*"
+        "(?: [^"\\]+ | \\. )*" |
+        (?: \S (?! [()":] ) )+
       }x
-      tokens.map do |t|  # apply brace expansion, except on regexps!
-        if t =~ %r{ ^ (\w+) ( : ["/] .+ ) $ }x
-          Utils.expand_braces($1 + $2.tr('{}', "\0\1")).tr("\0\1", '{}')
+      tokens.map! do |t|  # apply brace expansion, except on regexps!
+        if t =~ %r{ ^ ([\w\{\},]+) ( : ["/] .+ ) $ }x
+          Utils.expand_braces($1 + $2.tr('{} ', "\0\1\2")).tr("\0\1", '{}').split.map { |e| e.tr("\2", ' ') }
         elsif t =~ /^"/
           t[1..-1]  # remove the now useless quotes
         else
-          Utils.expand_braces(t)
+          Utils.expand_braces(t).split
         end
       end
+      tokens.flatten
     end
 
     def initialize(str)
@@ -50,6 +51,10 @@ module VikiLinkBot
 
     def args
       @tokens.drop(1)
+    end
+
+    def empty?
+      @tokens.empty?
     end
 
   end
