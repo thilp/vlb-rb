@@ -42,7 +42,7 @@ bot = Cinch::Bot.new do
 end
 
 constraints = VikiLinkBot::Shell.watch_parse('title:/Vikidia:Demandes aux (admin|bureaucrates)/'.gsub(/([()])/, ' \\1 ').split)
-debug "Registering watcher from run.rb with constraints: #{constraints}"
+puts "Registering watcher from run.rb with constraints: #{constraints}"
 VikiLinkBot::Watcher.register(
     lambda { |mm, _json| mm.channel.name == '#vikidia' && eval(constraints) },
     lambda do |_, _json|
