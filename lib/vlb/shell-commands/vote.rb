@@ -1,3 +1,5 @@
+require 'vlb/utils'
+
 module VikiLinkBot
   class Shell
 
@@ -15,13 +17,13 @@ module VikiLinkBot
           sa: 'Vikidia:Super_article/Élection'
       }
       unless kinds.key?(kind)
-        guesses = guess(kind.to_s, kinds.keys)
+        guesses = Utils.guess(kind.to_s, kinds.keys)
         if guesses.size == 1
           kind = guesses.first.to_sym
         else
           m.reply(guesses.empty? ?
               "Désolé, je ne connais pas #{kind} mais #{kinds.keys.join(', ')}." :
-              "Je ne connais pas #{kind}, vouliez-vous plutôt dire #{join_multiple(guesses)} ?")
+              "Je ne connais pas #{kind}, vouliez-vous plutôt dire #{Utils.join_multiple(guesses)} ?")
           return
         end
       end

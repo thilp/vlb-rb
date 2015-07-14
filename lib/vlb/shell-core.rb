@@ -15,10 +15,10 @@ module VikiLinkBot
 
     def self.split(str)
       tokens = str.scan %r{
-        [\w/\{\},]+ (?: : (?: \w+ | \#[tf] | /(?: [^/\\]+ | \\. )*/ | "(?: [^"\\]+ | \\. )*" ) )? |
+        [A-Za-z/\{\}][\w/\{\},]* (?: : (?: \w+ | \#[tf] | /(?: [^/\\]+ | \\. )*/ | "(?: [^"\\]+ | \\. )*" ) )? |
         \( | \) |
         "(?: [^"\\]+ | \\. )*" |
-        (?: \S (?! [()":] ) )+
+        (?: \S (?<! [()":] ) )+
       }x
       tokens.map! do |t|  # apply brace expansion, except on regexps!
         if t =~ %r{ ^ ([\w\{\},]+) ( : ["/] .+ ) $ }x
