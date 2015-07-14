@@ -73,6 +73,14 @@ module VikiLinkBot
       end
     end
 
+    def watched(m, _)
+      if @watched.empty?
+        m.reply 'Rien actuellement.'
+      else
+        m.reply Utils.join_multiple(@watched.keys.map(&:inspect), ', ', ' et ')
+      end
+    end
+
     def lisp2ruby(m, input)
       begin
         self.class.watch_parse(input.args).split("\n").each do |line|
