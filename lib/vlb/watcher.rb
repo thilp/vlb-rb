@@ -28,10 +28,12 @@ module VikiLinkBot
       begin
         full_json = JSON.parse(buffer + m.message)
       rescue JSON::ParserError
+        debug "Failed JSON.parse for: #{buffer + m.message}"
         if m.message.start_with?('{')
           begin
             full_json = JSON.parse(m.message)  # you never know ...
           rescue JSON::ParserError
+            debug "Failed JSON.parse for: #{m.message}"
             @source_buffer[chan_name] = m.message  # replace the old buffer with m.message for the next chunk
             return
           end

@@ -1,4 +1,5 @@
 require 'vlb/watcher'
+require 'vlb/trust_authority'
 require 'vlb/utils'
 
 module VikiLinkBot
@@ -9,8 +10,8 @@ module VikiLinkBot
         m.reply "Usage : !#{__method__} <description> <canal> <conditions>"
         return
       end
-      unless m.channel.voiced?(m.user) || m.channel.opped?(m.user)
-        m.reply 'Désolé, seuls les utilisateurs en +v ou +o peuvent utiliser cette commande.'
+      unless VikiLinkBot::TrustAuthority.instance.whitelisted?(m.user, m.channel)
+        m.reply 'Désolé, seuls les utilisateurs en liste blanche peuvent utiliser cette commande.'
         return
       end
 
@@ -35,8 +36,11 @@ module VikiLinkBot
 
       wid = VikiLinkBot::Watcher.register(
           lambda { |mm, _json| mm.channel.name == chan_name && eval(constraints) },
-          lambda { |_, _json| m.reply "[watch] #{watch_name} (#{chan_name})"
-                              m.reply "[watch] « #{_json['comment']} »" if _json['comment'] })
+          lambda do |_, _json|
+            m.reply "[watch] #{watch_name} (#{chan_name})"
+            m.reply "[watch] par #{_json['user']} sur #{_json['title']} « #{
+                    (_json['comment'] && !_json['comment'].empty?) ? ' « ' + _json['comment'] + ' » ' : '' } »"
+          end)
 
       (@watched ||= {})[watch_name] = wid
 
@@ -48,8 +52,8 @@ module VikiLinkBot
         m.reply "Usage : !#{__method__} <description>"
         return
       end
-      unless m.channel.voiced?(m.user) || m.channel.opped?(m.user)
-        m.reply 'Désolé, seuls les utilisateurs en +v ou +o peuvent utiliser cette commande.'
+      unless VikiLinkBot::TrustAuthority.instance.whitelisted?(m.user, m.channel)
+        m.reply 'Désolé, seuls les utilisateurs en liste blanche peuvent utiliser cette commande.'
         return
       end
       desc = tokens.join(' ')
