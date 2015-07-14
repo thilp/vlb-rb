@@ -9,13 +9,13 @@ module VikiLinkBot
     undef_method(:trust)
     undef_method(:untrust)
 
-    def trust(m, tokens)
+    def trust(m, input)
       unless m.channel.opped?(m.user)
         m.reply 'Désolé, seuls les opérateurs du canal peuvent utiliser cette commande.'
         return
       end
       trusted = []
-      tokens.each do |username|
+      input.args.each do |username|
         user = User(username)
         unless user.authed?
           m.reply "L'utilisateur #{username} n'est pas authentifié (ignoré)."
@@ -29,13 +29,13 @@ module VikiLinkBot
       end
     end
 
-    def untrust(m, tokens)
+    def untrust(m, input)
       unless m.channel.opped?(m.user)
         m.reply 'Désolé, seuls les opérateurs du canal peuvent utiliser cette commande.'
         return
       end
       untrusted = []
-      tokens.each do |username|
+      input.args.each do |username|
         user = User(username)
         if m.channel.opped?(user)
           m.reply "L'utilisateur #{username} est opérateur (ignoré)."

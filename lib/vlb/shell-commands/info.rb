@@ -1,8 +1,8 @@
 module VikiLinkBot
   class Shell
 
-    def info(m, tokens)
-      domain, query = tokens.size == 1 ? [nil, tokens.first] : tokens
+    def info(m, input)
+      domain, query = input.args.size == 1 ? [nil, input.args.first] : input.args
       query = query.downcase.split('/').map(&:strip)
       if query.empty?
         m.reply "Désolé, je ne peux rien faire d'une requête vide !"

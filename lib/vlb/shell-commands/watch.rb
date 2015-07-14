@@ -5,8 +5,8 @@ require 'vlb/utils'
 module VikiLinkBot
   class Shell
 
-    def watch(m, tokens)
-      if tokens.size < 3
+    def watch(m, input)
+      if input.args.size < 3
         m.reply "Usage : !#{__method__} <description> <canal> <conditions>"
         return
       end
@@ -19,15 +19,15 @@ module VikiLinkBot
         return
       end
 
-      watch_name = tokens.shift
+      watch_name = input.args.first
 
-      chan_name = tokens.shift
+      chan_name = input.args[1]
       unless VikiLinkBot::Watcher.trusted_sources.key?(chan_name)
         m.reply "Désolé, je ne surveille pas le canal #{chan_name}."
         return
       end
 
-      constraints = tokens.join(' ').gsub(/([()])/, ' \\1 ').split
+      constraints = input.args.drop(2)
 
       begin
         constraints = self.class.watch_parse(constraints)
@@ -51,8 +51,8 @@ module VikiLinkBot
       m.reply 'Je vous préviendrai !'
     end
 
-    def unwatch(m, tokens)
-      if tokens.empty?
+    def unwatch(m, input)
+      if input.args.empty?
         m.reply "Usage : !#{__method__} <description>"
         return
       end
@@ -64,7 +64,7 @@ module VikiLinkBot
         m.reply 'Désolé, seuls les utilisateurs en liste blanche peuvent utiliser cette commande.'
         return
       end
-      desc = tokens.join(' ')
+      desc = input.args.first
       if @watched.key?(desc)
         VikiLinkBot::Watcher.unregister(@watched[desc])
         m.reply 'Je ne vous préviendrai plus pour cet évènement.'
@@ -73,9 +73,9 @@ module VikiLinkBot
       end
     end
 
-    def lisp2ruby(m, tokens)
+    def lisp2ruby(m, input)
       begin
-        self.class.watch_parse(tokens.join(' ').gsub(/([()])/, ' \\1 ').split).split("\n").each do |line|
+        self.class.watch_parse(input.args).split("\n").each do |line|
           m.reply line
           sleep 1
         end

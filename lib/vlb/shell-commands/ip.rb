@@ -1,17 +1,17 @@
 module VikiLinkBot
   class Shell
 
-    def ip(m, tokens)
-      if tokens.empty?
+    def ip(m, input)
+      if input.args.empty?
         m.reply 'Pour quelle adresse ?'
         return
       end
-      unless tokens.first =~ /^ \d{1,3} (?: \. \d{1,3} ){3} $/x
-        m.reply "Désolé, #{tokens.first} n'est pas une adresse IPv4."
+      unless input.args.first =~ /^ \d{1,3} (?: \. \d{1,3} ){3} $/x
+        m.reply "Désolé, #{input.args.first} n'est pas une adresse IPv4."
         return
       end
 
-      url = 'https://whatismyipaddress.com/ip/' + tokens.first
+      url = 'https://whatismyipaddress.com/ip/' + input.args.first
 
       begin
         @httpc.get_content(url) do |chunk|

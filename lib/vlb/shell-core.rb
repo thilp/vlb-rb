@@ -9,6 +9,51 @@ end
 
 module VikiLinkBot
 
+  class Input
+    include Enumerable
+
+    attr_reader :raw
+
+    def self.split(str)
+      tokens = str.scan %r{
+        \w+ (?: : (?: /(?: [^/\\]+ | \\. )*/ | "(?: [^"\\]+ | \\. )*" ) )? |
+        \( | \) |
+        "(?: [^"\\]+ | \\. )*"
+      }x
+      tokens.map do |t|  # apply brace expansion, except on regexps!
+        if t =~ %r{ ^ (\w+) ( : ["/] .+ ) $ }x
+          Utils.expand_braces($1 + $2.tr('{}', "\0\1")).tr("\0\1", '{}')
+        elsif t =~ /^"/
+          t[1..-1]  # remove the now useless quotes
+        else
+          Utils.expand_braces(t)
+        end
+      end
+    end
+
+    def initialize(str)
+      @raw = str
+      @tokens = self.class.split(str)
+    end
+
+    def each
+      if block_given?
+        @tokens.each { |t| yield(t) }
+      else
+        @tokens.each
+      end
+    end
+
+    def command
+      @command ||= @tokens.first[1..-1].to_sym
+    end
+
+    def args
+      @tokens.drop(1)
+    end
+
+  end
+
   class Shell
     include Cinch::Plugin
 
@@ -20,28 +65,26 @@ module VikiLinkBot
     end
 
     def read_eval(m, super_tokens=nil)
-      tokens = super_tokens || Utils.expand_braces(m.message).shellsplit
+      input = super_tokens || Input.new(m.message)
 
-      return if tokens.empty?
+      return if input.empty?
 
-      command = tokens.first[1..-1].to_sym
-      if respond_to?(command)
-        tokens.shift
+      if respond_to?(input.command)
         begin
-          method(command).call(m, tokens)
+          method(input.command).call(m, input)
         rescue => e
           m.reply "Oups ! Exception non rattrapée : #{e}"
           log(e.message + ' -- ' + e.backtrace.join("\n"))
         end
       else
-        guesses = Utils.guess(command.to_s, methods).map { |g| "!#{g}" }
+        guesses = Utils.guess(input.command.to_s, methods).map { |g| "!#{g}" }
         m.reply "Vouliez-vous dire #{Utils.join_multiple(guesses)} ?" unless guesses.empty?
       end
 
     end
 
     def version(m, tokens)
-      m.reply 'VikiLinkBot::Shell 2.1.2'
+      m.reply 'VikiLinkBot::Shell 2.2.0'
     end
 
   end
