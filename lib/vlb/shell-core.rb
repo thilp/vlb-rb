@@ -7,7 +7,6 @@ Dir.glob(__dir__ + '/shell-commands/*.rb').each do |fname|
   require fname
 end
 
-
 module VikiLinkBot
 
   class Shell

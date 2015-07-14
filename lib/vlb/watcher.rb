@@ -22,27 +22,28 @@ module VikiLinkBot
       return unless self.class.trusted_sources.key?(chan_name)
       return unless self.class.trusted_sources[chan_name].include?(m.user.name)
 
-      # Careful, the message could be incomplete JSON
-      buffer = @source_buffer[chan_name] || ''
-
-      begin
-        full_json = JSON.parse(buffer + m.message)
-      rescue JSON::ParserError
-        debug "Failed JSON.parse for: #{buffer + m.message}"
-        if m.message.start_with?('{')
-          begin
-            full_json = JSON.parse(m.message)  # you never know ...
-          rescue JSON::ParserError
-            debug "Failed JSON.parse for: #{m.message}"
-            @source_buffer[chan_name] = m.message  # replace the old buffer with m.message for the next chunk
+      full_json = nil
+      synchronize(:json) do
+        # Careful, the message could be incomplete JSON
+        buffer = @source_buffer[chan_name] || ''
+        begin
+          full_json = JSON.parse(buffer + m.message)
+        rescue JSON::ParserError
+          if m.message.start_with?('{')
+            begin
+              full_json = JSON.parse(m.message) # you never know ...
+            rescue JSON::ParserError
+              @source_buffer[chan_name] = m.message # replace the old buffer with m.message for the next chunk
+              return
+            end
+          else
+            @source_buffer[chan_name] = buffer + m.message # ok, seems this is going to span more than 2 chunks ...
             return
           end
-        else
-          @source_buffer[chan_name] = buffer + m.message  # ok, seems this is going to span more than 2 chunks ...
-          return
         end
+        @source_buffer[chan_name] = ''
       end
-      @source_buffer[chan_name] = ''
+
       self.class.registry.values.each do |predicate, callback|
         if predicate.call(m, full_json) && callback
           callback.call(m, full_json)
