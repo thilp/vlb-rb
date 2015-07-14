@@ -173,31 +173,32 @@ module VikiLinkBot
         key, value = $1, $2
         key_parts = key.gsub(%r{ ^ / | / $ }x, '').split('/')
         raise LispParseError.new(%q{le nom "_json" n'est pas utilisable dans les conditions}) if key_parts.include?('_json')
+        lhs = '_json[' + key_parts.map { |k| k.inspect }.join('][') + ']'
         if value.start_with?('/')
           unless value.end_with?('/', '/i')
             raise LispParseError.new("expression rationnelle non fermée pour #{key_parts.join('/')}")
           end
-          regex_opts = Regexp::EXTENDED
+          regex_opts = 0
           if value.end_with?('/i')
             regex_opts |= Regexp::IGNORECASE
             value.chop!
           end
-          value = " =~ #{Regexp.new(value[1..-2], regex_opts).inspect}"
+          value = "!(#{lhs} =~ #{Regexp.new(value[1..-2], regex_opts).inspect}).nil?"
         elsif value.start_with?('#')
-          value = " == #{value.end_with?('t')}"
+          value = (value.end_with?('t') ? '' : '!') + lhs
         elsif value =~ /^\d[\d_]*$/
-          value = " == #{value}"
+          value = "#{lhs} == #{value}"
         else
           if value.start_with?('"')
             raise LispParseError.new("chaîne de caractères non fermée pour #{key_parts.join('/')}") unless value.end_with?('"')
-            value = " == #{value}"
+            value = "#{lhs} == #{value}"
           else
-            value = " == #{value.inspect}"
+            value = "#{lhs} == #{value.inspect}"
           end
         end
         g = <<-GENERATED
           begin
-            _json#{ '[' + key_parts.map { |k| k.inspect }.join('][') + ']' } #{value}
+            #{value}
           rescue
             false
           end
