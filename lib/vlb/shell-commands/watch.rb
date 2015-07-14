@@ -85,10 +85,8 @@ module VikiLinkBot
     end
 
     def self.watch_parse(tokens)
-      unless tokens.first == '('
-        tokens.unshift('(', 'AND')
-        tokens << ')'
-      end
+      tokens.unshift('(', 'AND')
+      tokens << ')'
       watch_parse_expr(tokens)
     end
 
