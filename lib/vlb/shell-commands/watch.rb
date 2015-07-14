@@ -38,8 +38,8 @@ module VikiLinkBot
           lambda { |mm, _json| mm.channel.name == chan_name && eval(constraints) },
           lambda do |_, _json|
             m.reply "[watch] #{watch_name} (#{chan_name})"
-            m.reply "[watch] par #{_json['user']} sur #{_json['title']} « #{
-                    (_json['comment'] && !_json['comment'].empty?) ? ' « ' + _json['comment'] + ' » ' : '' } »"
+            m.reply "[watch] par #{_json['user']} sur [[#{_json['title']}]]#{
+                    (_json['comment'] && !_json['comment'].empty?) ? ' « ' + _json['comment'] + ' »' : '' }"
           end)
 
       (@watched ||= {})[watch_name] = wid
@@ -97,7 +97,7 @@ module VikiLinkBot
         :<= => [:watch_fbin_le, '<='],
         :!= => [:watch_fbin_notequal, '!='],
         '='.to_sym => [:watch_fbin_equal, '=='],
-        :EMPTY? => [:watch_fmeth_empty, 'empty?'],
+        :EMPTY? => [:watch_fvarmeth_empty, 'empty?'],
         :SIZE => [:watch_fmeth_size, 'size'],
     }
 
@@ -122,10 +122,20 @@ module VikiLinkBot
     end
 
     @lisp_functions.each do |k, v|
-      next unless v.is_a?(Array) && v.first.to_s.start_with?('watch_fmeth_')
+      next unless v.is_a?(Array) && v.first.to_s.start_with?('watch_fvarmeth_')
       class_eval <<-RUBY
         def self.#{v.first}(args)
           'begin; ( ' + args.map { |e| e + ".#{v.last}" }.join(' ) && ( ') + ' );rescue;false;end'
+        end
+      RUBY
+      @lisp_functions[k] = v.first
+    end
+    @lisp_functions.each do |k, v|
+      next unless v.is_a?(Array) && v.first.to_s.start_with?('watch_fmeth_')
+      class_eval <<-RUBY
+        def self.#{v.first}(args)
+          raise LispParseError.new("#{k} attend 1 argument (reçu " + args.size + ')') unless args.size == 1
+          'begin; ( ' + args.first + ".#{v.last} );rescue;false;end"
         end
       RUBY
       @lisp_functions[k] = v.first
