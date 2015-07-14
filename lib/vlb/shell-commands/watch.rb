@@ -10,6 +10,10 @@ module VikiLinkBot
         m.reply "Usage : !#{__method__} <description> <canal> <conditions>"
         return
       end
+      if m.channel.nil?
+        m.reply "Cette commande n'est utilisable que sur un canal."
+        return
+      end
       unless VikiLinkBot::TrustAuthority.instance.whitelisted?(m.user, m.channel)
         m.reply 'Désolé, seuls les utilisateurs en liste blanche peuvent utiliser cette commande.'
         return
@@ -50,6 +54,10 @@ module VikiLinkBot
     def unwatch(m, tokens)
       if tokens.empty?
         m.reply "Usage : !#{__method__} <description>"
+        return
+      end
+      if m.channel.nil?
+        m.reply "Cette commande n'est utilisable que sur un canal."
         return
       end
       unless VikiLinkBot::TrustAuthority.instance.whitelisted?(m.user, m.channel)
