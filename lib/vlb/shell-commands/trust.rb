@@ -5,6 +5,10 @@ require 'vlb/utils'
 module VikiLinkBot
   class Shell
 
+    # These are defined in Object and clash with our own
+    undef_method(:trust)
+    undef_method(:untrust)
+
     def trust(m, tokens)
       unless m.channel.opped?(m.user)
         m.reply 'Désolé, seuls les opérateurs du canal peuvent utiliser cette commande.'
