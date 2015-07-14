@@ -29,7 +29,7 @@ module VikiLinkBot
 
         hash = [wiki, pagename]
         if links[hash]
-          links[hash] = Wikilink.new(wiki, pagename, check) if check && links[hash].status == 0
+          links[hash] = Wikilink.new(wiki, pagename, check) if check && links[hash].state == 0
         else
           links[hash] = Wikilink.new(wiki, pagename, check)
         end
