@@ -171,13 +171,14 @@ module VikiLinkBot
         method(@lisp_functions[fun]).call(args)
       elsif t =~ %r{ ^ [-a-z_/]+ $ }xi
         '_json' + '[' + t.split('/').map { |k| k.inspect }.join('][') + ']'
-      elsif t =~ %r{ ^ ( [-a-z_/]+ ) : ( / .* | \#[tf] | \w+ ) $ }xi
+      elsif t =~ %r{ ^ ( [-a-z_/]+ ) : ( " .* | / .* | \#[tf] | \w+ ) $ }xi
         key, value = $1, $2
         key_parts = key.gsub(%r{ ^ / | / $ }x, '').split('/')
         raise LispParseError.new(%q{le nom "_json" n'est pas utilisable dans les conditions}) if key_parts.include?('_json')
         if value.start_with?('/')
-          value += ' \\  ' + tokens.shift until tokens.empty? || value.end_with?('/', '/i')
-          raise LispParseError.new("expression rationnelle non fermée pour #{key_parts.join('/')}") if tokens.empty?
+          unless value.end_with?('/', '/i')
+            raise LispParseError.new("expression rationnelle non fermée pour #{key_parts.join('/')}")
+          end
           regex_opts = Regexp::EXTENDED
           if value.end_with?('/i')
             regex_opts |= Regexp::IGNORECASE
@@ -190,10 +191,11 @@ module VikiLinkBot
           value = " == #{value}"
         else
           if value.start_with?('"')
-            value += ' ' + tokens.shift until tokens.empty? || value.end_with?('"')
-            raise LispParseError.new("chaîne de caractères non fermée pour #{key_parts.join('/')}") if tokens.empty?
+            raise LispParseError.new("chaîne de caractères non fermée pour #{key_parts.join('/')}") unless value.end_with?('"')
+            value = " == #{value}"
+          else
+            value = " == #{value.inspect}"
           end
-          value = " == #{value.inspect}"
         end
         g = <<-GENERATED
           begin
