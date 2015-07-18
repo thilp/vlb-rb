@@ -1,6 +1,7 @@
 require 'cinch'
 require 'httpclient'
 require 'vlb/utils'
+require 'vlb/wiki'
 
 Dir.glob(__dir__ + '/shell-commands/*.rb').each do |fname|
   require fname
@@ -15,6 +16,7 @@ module VikiLinkBot
 
     def self.split(str)
       tokens = str.scan %r{
+        @[A-Za-z0-9\{][\w.-{,}]* (?!<[\{-]) |
         [A-Za-z/\{\}][\w/\{\},]* (?: : (?: [\w.:-]+ | \#[tf] | /(?: [^/\\]+ | \\. )*/i? | "(?: [^"\\]+ | \\. )*" ) )? |
         \( | \) |
         "(?: [^"\\]+ | \\. )*" |
@@ -50,7 +52,16 @@ module VikiLinkBot
     end
 
     def args
-      @tokens.drop(1)
+      @args ||= @tokens.drop(1).reject { |e| e.empty? || e.start_with?('@') }
+    end
+
+    def wikis
+      @wikis ||= begin
+        wf = WikiFactory.instance
+        wikis = @tokens.drop(1).select { |e| e.start_with?('@') }.map { |e| wf.get(e[1..-1]) }
+        wikis = [wf.get] if wikis.empty?
+        wikis
+      end
     end
 
     def empty?

@@ -35,7 +35,8 @@ module VikiLinkBot
       else
         constraints = [input.args[1]]
       end
-      output_format = input.args[1 + constraints.size] || '${title} par ${user} : « ${comment} »'
+      output_format = input.args[1 + constraints.size] ||
+          '[[' + Format(:blue, '${title}') + ']] par ' + Format(:green, '${user}') + ' : « ${comment} »'
 
       begin
         watch_register(watch_name, '#vikidia-rc-json', m.channel, constraints, output_format)

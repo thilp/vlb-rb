@@ -51,7 +51,8 @@ if PLUGIN_SHELL
     PLUGIN_SHELL.watch_register(
         wname, '#vikidia-rc-json', Channel('#vikidia'),
         VikiLinkBot::Input.split(wconstraints),
-        '${title} par ${user} : « ${comment} »')
+        '[[' + Cinch::Formatting.format(:blue, '${title}') + ']] par ' +
+            Cinch::Formatting.format(:green, '${user}') + ' : « ${comment} »')
   end
 end
 
