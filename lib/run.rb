@@ -41,14 +41,18 @@ bot = Cinch::Bot.new do
   end
 end
 
-constraints = VikiLinkBot::Shell.watch_parse(VikiLinkBot::Input.split('title:/^Vikidia:Demandes aux (admin|bureaucrates)/'))
-puts "Registering watcher from run.rb with constraints: #{constraints}"
-VikiLinkBot::Watcher.register(
-    lambda { |mm, _json| mm.channel.name == '#vikidia' && eval(constraints) },
-    lambda do |_, _json|
-      Channel('#vikidia').send '[watch] VD:DA / VD:DB'
-      Channel('#vikidia').send "[watch] par #{_json['user']} sur #{_json['title']}#{
-              (_json['comment'] && !_json['comment'].empty?) ? ' « ' + _json['comment'] + ' »' : '' }"
-    end)
+PLUGIN_SHELL = bot.plugins.find { |e| e.is_a?(VikiLinkBot::Shell) }
+if PLUGIN_SHELL
+  {
+      'VD:DA / VD:DB' => 'title:/^Vikidia:Demandes aux (admin|bureaucrates)/ (NOT log_type:patrol)',
+      'Blanchiment' => '(< length/new 20) (> (/ length/old length/new) 3.0)'
+  }.each do |wname, wconstraints|
+    bot.loggers.info "Registering !watch #{wname}: #{wconstraints}"
+    PLUGIN_SHELL.watch_register(
+        wname, '#vikidia-rc-json', Channel('#vikidia'),
+        VikiLinkBot::Input.split(wconstraints),
+        '${title} par ${user} : « ${comment} »')
+  end
+end
 
 bot.start

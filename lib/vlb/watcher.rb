@@ -1,5 +1,6 @@
 require 'cinch'
 require 'json'
+require 'vlb/utils'
 
 module VikiLinkBot
 
@@ -43,6 +44,7 @@ module VikiLinkBot
         end
         @source_buffer[chan_name] = ''
       end
+      full_json = VikiLinkBot::Utils.unescape_unicode(full_json)
 
       self.class.registry.values.each do |predicate, callback|
         if predicate.call(m, full_json) && callback

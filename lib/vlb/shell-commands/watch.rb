@@ -6,8 +6,8 @@ module VikiLinkBot
   class Shell
 
     def watch(m, input)
-      if input.args.size < 3
-        m.reply "Usage : !#{__method__} <description> <canal> <conditions>"
+      if input.args.size < 2
+        m.reply "Usage : !#{__method__} <nom> <conditions> [<format de notif>]"
         return
       end
       if m.channel.nil?
@@ -17,40 +17,40 @@ module VikiLinkBot
       return if VikiLinkBot::TrustAuthority.reject?(m, :whitelisted?)
 
       watch_name = input.args.first
-
-      chan_name = input.args[1]
-      unless VikiLinkBot::Watcher.trusted_sources.key?(chan_name)
-        m.reply "Désolé, je ne surveille pas le canal #{chan_name}."
-        return
+      if input.args[1] == '('
+        opening, closing = 0, 0
+        constraints = input.args.drop(1).take_while do |e|
+          case e
+            when '('
+              opening += 1
+              true
+            when ')'
+              ret = (opening != closing)
+              closing += 1
+              ret
+            else
+              true
+          end
+        end
+      else
+        constraints = [input.args[1]]
       end
-
-      constraints = input.args.drop(2)
+      output_format = input.args[1 + constraints.size] || '${title} par ${user} : « ${comment} »'
 
       begin
-        constraints = self.class.watch_parse(constraints)
+        watch_register(watch_name, '#vikidia-rc-json', m.channel, constraints, output_format)
       rescue LispParseError => e
         m.reply "Problème lors de l'analyse des contraintes : #{e}"
-        return
+      rescue LispAnticipatedError => e
+        m.reply "Format de contraintes valide, mais #{e}"
+      else
+        m.reply 'Je vous préviendrai !'
       end
-
-      log "Creating new watcher with constraints: #{constraints}"
-
-      wid = VikiLinkBot::Watcher.register(
-          lambda { |mm, _json| mm.channel.name == chan_name && eval(constraints) },
-          lambda do |_, _json|
-            m.reply "[watch] #{watch_name} (#{chan_name})"
-            m.reply "[watch] par #{_json['user']} sur [[#{_json['title']}]]#{
-                    (_json['comment'] && !_json['comment'].empty?) ? ' « ' + _json['comment'] + ' »' : '' }"
-          end)
-
-      (@watched ||= {})[watch_name] = wid
-
-      m.reply 'Je vous préviendrai !'
     end
 
     def unwatch(m, input)
       if input.args.empty?
-        m.reply "Usage : !#{__method__} <description>"
+        m.reply "Usage : !#{__method__} <description>+"
         return
       end
       if m.channel.nil?
@@ -59,20 +59,33 @@ module VikiLinkBot
       end
       return if VikiLinkBot::TrustAuthority.reject?(m, :whitelisted?)
 
-      desc = input.args.first
-      if @watched.key?(desc)
-        VikiLinkBot::Watcher.unregister(@watched[desc])
-        m.reply 'Je ne vous préviendrai plus pour cet évènement.'
-      else
-        m.reply 'Désolé, je ne connais pas cet évènement.'
+      input.args.each do |name|
+        if @watched.key?(name)
+          VikiLinkBot::Watcher.unregister(@watched.delete(name)[:wid])
+          m.reply 'Je ne vous préviendrai plus pour cet évènement.'
+        else
+          m.reply 'Désolé, je ne connais pas cet évènement.'
+        end
       end
     end
 
-    def watched(m, _)
-      if @watched.empty?
-        m.reply 'Rien actuellement.'
+    def watched(m, input)
+      if input.args.empty?
+        if @watched.empty?
+          m.reply 'Rien actuellement.'
+        else
+          m.reply Utils.join_multiple(@watched.keys.map(&:inspect), ', ', ' et ')
+        end
       else
-        m.reply Utils.join_multiple(@watched.keys.map(&:inspect), ', ', ' et ')
+        input.args.each do |name|
+          if @watched.include?(name)
+            w = @watched[name]
+            m.reply "#{name} (##{w[:wid]}) : #{w[:constraints]}"
+          else
+            m.reply "Je ne connais pas #{name.inspect}"
+          end
+          sleep 1
+        end
       end
     end
 
@@ -87,10 +100,41 @@ module VikiLinkBot
       end
     end
 
+    def watch_register(watch_name, watched_channel, notif_channel, str_constraints, output_format)
+      return if watch_name.is_a?(Cinch::Message)  # ignore direct calls from IRC
+
+      @watched ||= {}
+      if (old = @watched.delete(watch_name))
+        VikiLinkBot::Watcher.unregister(old[:wid])
+      end
+
+      constraints = watch_parse(str_constraints)
+      log "Creating new watcher with constraints: #{constraints}"
+      wid = VikiLinkBot::Watcher.register(
+                                    lambda { |m, _json| m.channel.name == watched_channel && eval(constraints) },
+                                    lambda do |_, _json|
+                                      comment = self.class.sprintf(output_format, _json)
+                                      notif_channel.send("[watch] #{watch_name}" + (comment.empty? ? '' : " - #{comment}"))
+                                    end
+      )
+      @watched[watch_name] = {wid: wid, constraints: str_constraints, code: constraints}
+    end
+
+    # @return [String]
+    def self.sprintf(format, json)
+      format.gsub(%r{ \$\{ ([^\}]+) \} }x) { json[$1] || '' }
+    end
+
     def self.watch_parse(tokens)
       tokens.unshift('(', 'AND')
       tokens << ')'
-      watch_parse_expr(tokens)
+      res = watch_parse_expr(tokens)
+      begin
+        always = eval(res)
+        raise LispAnticipatedError.new("expression toujours #{always ? 'vraie' : 'fausse'}")
+      rescue NameError
+        res
+      end
     end
 
     @lisp_functions = {
@@ -217,7 +261,8 @@ module VikiLinkBot
 
   end
 
-  class LispParseError < VikiLinkBot::Utils::VLBError
-  end
+  class LispParseError < VikiLinkBot::Utils::VLBError; end
+
+  class LispAnticipatedError < VikiLinkBot::Utils::VLBError; end
 
 end

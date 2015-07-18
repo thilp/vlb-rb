@@ -10,7 +10,7 @@ module VikiLinkBot
     # @param [String] input
     # @param [Array<String>] possibilities
     # @return [Array<String>]
-    def self.guess(input, possibilities)
+    def guess(input, possibilities)
       # Start guessing using abbreviations
       guesses = possibilities.abbrev(input).values.uniq
       return guesses if guesses.size == 1
@@ -26,7 +26,7 @@ module VikiLinkBot
 
     # @param [String] str
     # @return [String]
-    def self.expand_braces(str)
+    def expand_braces(str)
       new_str = str
       loop do
         tmp = new_str.gsub /(\S*) \{ ( [^,\}]* (?: , [^,\}]* )+ ) \} (\S*)/x do
@@ -40,10 +40,14 @@ module VikiLinkBot
 
     # @param [Array<String>] possibilities
     # @return [String]
-    def self.join_multiple(possibilities, intermediate=', ', final=' ou ')
+    def join_multiple(possibilities, intermediate=', ', final=' ou ')
       possibilities.size > 1 ?
           [possibilities[0..-2].join(intermediate), possibilities.last].join(final) :
           possibilities.first
+    end
+
+    def unescape_unicode(str)
+      str.gsub(/\\u([A-Fa-f0-9]{4})/) { [$1].pack('H*').unpack('n*').pack('U*') }
     end
 
   end
