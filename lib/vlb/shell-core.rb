@@ -104,7 +104,7 @@ module VikiLinkBot
     end
 
     def version(m, tokens)
-      m.reply 'VikiLinkBot::Shell 2.2.3'
+      m.reply 'VikiLinkBot::Shell 2.3.0'
     end
 
   end
