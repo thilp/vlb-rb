@@ -15,7 +15,7 @@ module VikiLinkBot
 
     def self.split(str)
       tokens = str.scan %r{
-        [A-Za-z/\{\}][\w/\{\},]* (?: : (?: \w+ | \#[tf] | /(?: [^/\\]+ | \\. )*/i? | "(?: [^"\\]+ | \\. )*" ) )? |
+        [A-Za-z/\{\}][\w/\{\},]* (?: : (?: [\w.:-]+ | \#[tf] | /(?: [^/\\]+ | \\. )*/i? | "(?: [^"\\]+ | \\. )*" ) )? |
         \( | \) |
         "(?: [^"\\]+ | \\. )*" |
         (?: \S (?<! [()":] ) )+
@@ -24,7 +24,7 @@ module VikiLinkBot
         if t =~ %r{ ^ ([\w\{\},]+) ( : ["/] .+ ) $ }x
           Utils.expand_braces($1 + $2.tr('{} ', "\0\1\2")).tr("\0\1", '{}').split.map { |e| e.tr("\2", ' ') }
         elsif t =~ /^"/
-          t[1..-1]  # remove the now useless quotes
+          t[1..-2]  # remove the now useless quotes
         else
           Utils.expand_braces(t).split
         end

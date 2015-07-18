@@ -189,7 +189,8 @@ module VikiLinkBot
           value = "!(#{lhs} =~ #{Regexp.new(value[1..-2], regex_opts).inspect}).nil?"
         elsif value.start_with?('#')
           value = (value.end_with?('t') ? '' : '!') + lhs
-        elsif value =~ /^\d[\d_]*$/
+        elsif value =~ %r{ ^ \d [\d_.]* (?<!\.) $ }x
+          value.delete!('_')
           value = "#{lhs} == #{value}"
         else
           if value.start_with?('"')
@@ -202,14 +203,12 @@ module VikiLinkBot
         g = <<-GENERATED
           begin
             #{value}
-          rescue
-            false
-          end
+          rescue; false; end
         GENERATED
         g.strip
       elsif t == '#t' || t == '#f'
         (t == '#t').to_s
-      elsif t =~ /^\d[\d_]*$/
+      elsif t =~ %r{ ^ \d [\d_.]* (?!<\.) $ }x
         t.delete('_')
       else
         raise LispParseError.new("expression incomprise : #{t.inspect}")
