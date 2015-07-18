@@ -18,7 +18,7 @@ module VikiLinkBot
     end
 
     def self.trusted_users(channel)
-      @whitelist[channel.name].each_pair
+      @whitelist[channel.name] ? @whitelist[channel.name].each_pair : []
     end
 
     def self.op?(user, channel)
