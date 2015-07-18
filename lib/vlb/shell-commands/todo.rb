@@ -11,7 +11,8 @@ module VikiLinkBot
         m.reply '∅'
       else
         VikiLinkBot::Todo.todos.each do |h|
-          m.reply "#{h[:date]} #{h[:author]}#{h[:authed] ? '*' : ''} (#{h[:channel]}) : #{h[:message]}"
+          m.reply Format(:grey, h[:date]) + ' ' + Format(:blue, h[:author] + (h[:authed] ? '*' : '')) +
+                      ' (' + h[:channel] + ') : ' + h[:message]
           sleep 0.6
         end
       end
