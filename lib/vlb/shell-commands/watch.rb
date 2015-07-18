@@ -61,7 +61,7 @@ module VikiLinkBot
       return if VikiLinkBot::TrustAuthority.reject?(m, :whitelisted?)
 
       input.args.each do |name|
-        if @watched.key?(name)
+        if (@watched ||= {}).key?(name)
           VikiLinkBot::Watcher.unregister(@watched.delete(name)[:wid])
           m.reply 'Je ne vous préviendrai plus pour cet évènement.'
         else
@@ -72,7 +72,7 @@ module VikiLinkBot
 
     def watched(m, input)
       if input.args.empty?
-        if @watched.empty?
+        if (@watched ||= {}).empty?
           m.reply 'Rien actuellement.'
         else
           m.reply Utils.join_multiple(@watched.keys.map(&:inspect), ', ', ' et ')
