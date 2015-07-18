@@ -62,7 +62,7 @@ class WikiFactory
       else
         if m_api
           url = m_api[1].start_with?('//') ? 'https:' + m_api[1] : m_api[1]
-          Wiki.new url, m_api[2], (m_articles ? m_articles[1] : ''), self
+          Wiki.new url, m_api[2], (m_articles ? m_articles[1] : '/wiki'), self
         else
           if @httpc.get('http://' + domain + '/w/api.php').ok?  # last chance!
             Wiki.new('http://' + domain, '/w/api.php', '/wiki', self)
