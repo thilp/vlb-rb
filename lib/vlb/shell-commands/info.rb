@@ -22,9 +22,9 @@ module VikiLinkBot
         query = query.downcase.split('/').map(&:strip)
         prop = query.first.to_sym
 
-        if aliases.key?(prop)
+        if @aliases.key?(prop)
           query.shift
-          query.unshift(*aliases[prop])
+          query.unshift(*@aliases[prop])
         end
 
         input.wikis.each do |wiki|
@@ -65,8 +65,8 @@ module VikiLinkBot
             next
           end
           m.reply(data.is_a?(Hash) ?
-                      "Désolé, #{parent_field} est un dictionnaire. Champs possibles : #{data.keys.join(', ')}" :
-                      "#{prefix} = #{data}")
+                      "#{prefix[:bad] + parent_field} est un dictionnaire. Champs possibles : #{data.keys.join(', ')}" :
+                      "#{prefix[:good]} = #{data}")
         end
       end
 

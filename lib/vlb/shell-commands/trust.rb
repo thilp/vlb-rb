@@ -53,7 +53,7 @@ module VikiLinkBot
         VikiLinkBot::TrustAuthority.trust_user(m.user, m.channel, m.user)
         m.reply "D'accord !"
       else
-        m.reply 'Petit malin ! Je ne te crois pas.'
+        m.reply 'Petit malin ! Non.'
       end
     end
 
@@ -61,7 +61,7 @@ module VikiLinkBot
       return if VikiLinkBot::TrustAuthority.reject?(m, :whitelisted?)
       VikiLinkBot::TrustAuthority.trusted_users(m.channel).each do |nick, metadata|
         next unless input.args.empty? || input.args.include?(nick)
-        m.reply "#{nick} (#{metadata[:host]}) par #{metadata[:truster]} le #{metadata[:date]}"
+        m.reply "#{nick}@#{metadata[:host]} par #{metadata[:truster]} (#{metadata[:date]})"
         sleep 1
       end
     end

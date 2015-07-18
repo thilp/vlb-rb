@@ -60,7 +60,7 @@ module VikiLinkBot
 
       return false if checks.include?(:whitelisted?) && whitelisted?(m.user, m.channel)
 
-      flags = checks.select { |c| c.start_with?('+') }.map { |f| f[1..-1].chars }.flatten
+      flags = checks.map(&:to_s).select { |c| c.start_with?('+') }.map { |f| f[1..-1].chars }.flatten
       return false if !flags.empty? && has_flags?(m.user, m.channel, *flags)
 
       m.reply "Désolé, vous n'avez pas le niveau de privilèges requis."

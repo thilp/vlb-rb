@@ -16,7 +16,7 @@ module VikiLinkBot
               json['query']['users'][0]['editcount'] || raise
             rescue
               m.reply "#{username} n'existe pas sur #{wiki.domain}"
-              return
+              next
             end
           end
           m.reply "#{editcount} - #{wiki.article_url('Special:Contributions/' + username)}"

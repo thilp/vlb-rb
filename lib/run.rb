@@ -5,6 +5,7 @@ require 'optparse'
 require 'vlb/shell-core'
 require 'vlb/wikilink_resolver'
 require 'vlb/watcher'
+require 'vlb/todo'
 
 options = {}
 
@@ -37,7 +38,7 @@ bot = Cinch::Bot.new do
     c.password = options[:password] if options[:password]
     c.server = options[:server]
     c.channels = options[:chans] + VikiLinkBot::Watcher.trusted_sources.keys
-    c.plugins.plugins = [VikiLinkBot::Shell, VikiLinkBot::WikiLinkResolver, VikiLinkBot::Watcher]
+    c.plugins.plugins = [VikiLinkBot::Shell, VikiLinkBot::WikiLinkResolver, VikiLinkBot::Watcher, VikiLinkBot::Todo]
   end
 end
 

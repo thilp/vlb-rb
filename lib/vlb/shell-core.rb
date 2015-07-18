@@ -17,7 +17,10 @@ module VikiLinkBot
     def self.split(str)
       tokens = str.scan %r{
         @[A-Za-z0-9\{][\w.-{,}]* (?!<[\{-]) |
-        [A-Za-z/\{\}][\w/\{\},]* (?: : (?: [\w.:-]+ | \#[tf] | /(?: [^/\\]+ | \\. )*/i? | "(?: [^"\\]+ | \\. )*" ) )? |
+        [A-Za-z/\{][^\s:()]* (?: : (?: (?!/) [^\s"()]+ |
+                                       \#[tf] |
+                                       /(?: [^/\\]+ | \\. )*/i? |
+                                       "(?: [^"\\]+ | \\. )*" ) )? |
         \( | \) |
         "(?: [^"\\]+ | \\. )*" |
         (?: \S (?<! [()":] ) )+
@@ -86,6 +89,7 @@ module VikiLinkBot
       return if input.empty?
 
       if respond_to?(input.command)
+        debug "Running command #{input.command} with arguments #{input.args} and wikis #{input.wikis}"
         begin
           method(input.command).call(m, input)
         rescue => e

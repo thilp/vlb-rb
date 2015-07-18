@@ -98,6 +98,8 @@ module VikiLinkBot
         end
       rescue LispParseError => e
         m.reply "Problème lors de l'analyse des contraintes : #{e}"
+      rescue LispAnticipatedError => e
+        m.reply "Format de contraintes valide, mais #{e}"
       end
     end
 
@@ -131,7 +133,7 @@ module VikiLinkBot
       tokens << ')'
       res = watch_parse_expr(tokens)
       begin
-        always = eval(res)
+        always = eval(res.gsub(%r{begin;?\s*|;?\s*rescue;false;end}, ''))
         raise LispAnticipatedError.new("expression toujours #{always ? 'vraie' : 'fausse'}")
       rescue NameError
         res
@@ -248,13 +250,13 @@ module VikiLinkBot
         g = <<-GENERATED
           begin
             #{value}
-          rescue; false; end
+          rescue;false;end
         GENERATED
         g.strip
       elsif t == '#t' || t == '#f'
         (t == '#t').to_s
-      elsif t =~ %r{ ^ \d [\d_.]* (?!<\.) $ }x
-        t.delete('_')
+      elsif t =~ %r{ ^ [+-]* \d [\d_.]* (?!<\.) $ }x
+        t.delete('_', '+')
       else
         raise LispParseError.new("expression incomprise : #{t.inspect}")
       end
