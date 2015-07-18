@@ -89,7 +89,7 @@ module VikiLinkBot
       return if input.empty?
 
       if respond_to?(input.command)
-        debug "Running command #{input.command} with arguments #{input.args} and wikis #{input.wikis}"
+        debug "Running command #{input.command} with arguments #{input.args} and wikis #{input.wikis.map(&:base_url)}"
         begin
           method(input.command).call(m, input)
         rescue => e
@@ -104,7 +104,7 @@ module VikiLinkBot
     end
 
     def version(m, tokens)
-      m.reply 'VikiLinkBot::Shell 2.3.2'
+      m.reply 'VikiLinkBot::Shell 2.3.3'
     end
 
   end

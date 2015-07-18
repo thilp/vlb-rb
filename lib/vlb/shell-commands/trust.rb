@@ -42,7 +42,7 @@ module VikiLinkBot
         untrusted << user.name
       end
       unless untrusted.empty?
-        m.reply "#{Utils.join_multiple(untrusted, ', ', ' et ')} ne peu#{trusted.size > 1 ? 'vent' : 't'} " +
+        m.reply "#{Utils.join_multiple(untrusted, ', ', ' et ')} ne peu#{untrusted.size > 1 ? 'vent' : 't'} " +
                     'plus utiliser les commandes à accès restreint.'
       end
     end
