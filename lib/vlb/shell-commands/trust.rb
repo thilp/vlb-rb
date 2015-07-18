@@ -10,22 +10,19 @@ module VikiLinkBot
     undef_method(:untrust)
 
     def trust(m, input)
-      unless m.channel.opped?(m.user)
-        m.reply 'Désolé, seuls les opérateurs du canal peuvent utiliser cette commande.'
-        return
-      end
+      return if VikiLinkBot::TrustAuthority.reject?(m, '+o')
       trusted = []
       input.args.each do |username|
         user = User(username)
         unless user.authed?
-          m.reply "L'utilisateur #{username} n'est pas authentifié (ignoré)."
-          next
+          m.reply "#{username} n'est pas authentifié : confiance temporaire."
         end
-        VikiLinkBot::TrustAuthority.instance.trust_user(user, m.channel)
+        VikiLinkBot::TrustAuthority.trust_user(user, m.channel, m.user)
         trusted << user.name
       end
       unless trusted.empty?
-        m.reply "#{Utils.join_multiple(trusted, ', ', ' et ')} peuvent désormais utiliser les commandes à accès restreint."
+        m.reply "#{Utils.join_multiple(trusted, ', ', ' et ')} peu#{trusted.size > 1 ? 'vent' : 't'} " +
+                    'désormais utiliser les commandes à accès restreint.'
       end
     end
 
@@ -41,11 +38,30 @@ module VikiLinkBot
           m.reply "L'utilisateur #{username} est opérateur (ignoré)."
           next
         end
-        VikiLinkBot::TrustAuthority.instance.untrust_user(user)
+        VikiLinkBot::TrustAuthority.untrust_user(user)
         untrusted << user.name
       end
       unless untrusted.empty?
-        m.reply "#{Utils.join_multiple(untrusted, ', ', ' et ')} ne peuvent plus utiliser les commandes à accès restreint."
+        m.reply "#{Utils.join_multiple(untrusted, ', ', ' et ')} ne peu#{trusted.size > 1 ? 'vent' : 't'} " +
+                    'plus utiliser les commandes à accès restreint.'
+      end
+    end
+
+    def trustme(m, _)
+      if File.exist?("/tmp/#{m.user.name}")
+        File.delete("/tmp/#{m.user.name}")
+        VikiLinkBot::TrustAuthority.trust_user(m.user, m.channel, m.user)
+        m.reply "D'accord !"
+      else
+        m.reply 'Petit malin ! Je ne te crois pas.'
+      end
+    end
+
+    def trusted(m, input)
+      return if VikiLinkBot::TrustAuthority.reject?(m, :whitelisted?)
+      VikiLinkBot::TrustAuthority.trusted_users(m.channel).each do |nick, metadata|
+        m.reply "#{nick} (#{metadata[:host]}) par #{metadata[:truster]} le #{metadata[:date]}"
+        sleep 1
       end
     end
 
