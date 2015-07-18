@@ -14,10 +14,7 @@ module VikiLinkBot
         m.reply "Cette commande n'est utilisable que sur un canal."
         return
       end
-      unless VikiLinkBot::TrustAuthority.instance.whitelisted?(m.user, m.channel)
-        m.reply 'Désolé, seuls les utilisateurs en liste blanche peuvent utiliser cette commande.'
-        return
-      end
+      return if VikiLinkBot::TrustAuthority.reject?(m, :whitelisted?)
 
       watch_name = input.args.first
 
@@ -60,10 +57,8 @@ module VikiLinkBot
         m.reply "Cette commande n'est utilisable que sur un canal."
         return
       end
-      unless VikiLinkBot::TrustAuthority.instance.whitelisted?(m.user, m.channel)
-        m.reply 'Désolé, seuls les utilisateurs en liste blanche peuvent utiliser cette commande.'
-        return
-      end
+      return if VikiLinkBot::TrustAuthority.reject?(m, :whitelisted?)
+
       desc = input.args.first
       if @watched.key?(desc)
         VikiLinkBot::Watcher.unregister(@watched[desc])
