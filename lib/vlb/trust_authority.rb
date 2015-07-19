@@ -63,15 +63,6 @@ module VikiLinkBot
 
     @levels = {whitelisted?:1, auth?:2, on_chan?:4, voiced?:14, op?:31}
 
-    def self.level_itoa(level)
-      res = []
-      @levels.sort_by { |_,v| -v }.each do |name, val|
-        next unless level & val == val
-        res << name.to_s
-      end
-      res.join('+')
-    end
-
     def self.user_status(user, channel)
       status = 0
       @levels.sort_by { |_,v| -v }.each do |name, val|
@@ -95,7 +86,7 @@ module VikiLinkBot
 
       return false if ok_with_one_of?(m, *checks)
 
-      expected = Utils.join_multiple(checks.map(&:level_itoa))
+      expected = Utils.join_multiple(checks.map(&:to_s).join('+'))
       m.reply "Désolé, vous n'avez pas le niveau de privilèges requis (#{expected})"
       true
     end
