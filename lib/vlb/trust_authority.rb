@@ -22,10 +22,11 @@ module VikiLinkBot
     end
 
     def self.op?(user, channel)
-      channel.users[user] && channel.users[user].include?('o')
+      channel && channel.users[user] && channel.users[user].include?('o')
     end
 
     def self.has_flags?(user, channel, *required_flags)
+      return false if channel.nil?
       return true if required_flags.empty?
 
       user_flags = channel.users[user]
@@ -37,6 +38,11 @@ module VikiLinkBot
     end
 
     def self.whitelisted?(user, channel)
+      if channel.nil?  # private message
+        # Consider user whitelisted iff it is whitelisted on at least a chan
+        return @whitelist.values.any? { |chan| chan[user.name] && user.host == chan[user.name][:host] }
+      end
+
       return false if @whitelist[channel.name].nil?
 
       metadata = @whitelist[channel.name][user.name]
