@@ -1,4 +1,4 @@
-require 'singleton'
+require 'vlb/utils'
 
 module VikiLinkBot
   class TrustAuthority
@@ -21,20 +21,20 @@ module VikiLinkBot
       @whitelist[channel.name] ? @whitelist[channel.name].each_pair : []
     end
 
-    def self.op?(user, channel)
-      channel && channel.users[user] && channel.users[user].include?('o')
+    def self.auth?(user, _channel)
+      user.authed?
     end
 
-    def self.has_flags?(user, channel, *required_flags)
-      return false if channel.nil?
-      return true if required_flags.empty?
+    def self.op?(user, channel)
+      on_chan?(user, channel) && channel.users[user].include?('o')
+    end
 
-      user_flags = channel.users[user]
-      return false if user_flags.nil?
+    def self.voiced?(user, channel)
+      on_chan?(user, channel) && channel.users[user].include?('v')
+    end
 
-      required_flags.all? do |f|
-        user_flags.include?(f)
-      end
+    def self.on_chan?(user, channel)
+      channel && channel.users[user]
     end
 
     def self.whitelisted?(user, channel)
@@ -61,15 +61,42 @@ module VikiLinkBot
       false
     end
 
+    @levels = {whitelisted?:1, auth?:2, on_chan?:4, voiced?:14, op?:31}
+
+    def self.level_itoa(level)
+      res = []
+      @levels.sort_by { |_,v| -v }.each do |name, val|
+        next unless level & val == val
+        res << name.to_s
+      end
+      res.join('+')
+    end
+
+    def self.user_status(user, channel)
+      status = 0
+      @levels.sort_by { |_,v| -v }.each do |name, val|
+        next if status & val > 0
+        status |= send(name, user, channel) ? val : 0
+      end
+      status
+    end
+
+    def self.ok_with_one_of?(m, *checks)
+      user_status = user_status(m.user, m.channel)
+      checks = [checks] if checks.all? { |e| e.is_a?(Symbol) }
+      checks.any? do |c|
+        level = c.map { |e| @levels[e] }.reduce(0, :+)
+        level & user_status == level
+      end
+    end
+
     def self.reject?(m, *checks)
-      return false if op?(m.user, m.channel)
+      checks = [checks] if checks.all? { |e| e.is_a?(Symbol) }
 
-      return false if checks.include?(:whitelisted?) && whitelisted?(m.user, m.channel)
+      return false if ok_with_one_of?(m, *checks)
 
-      flags = checks.map(&:to_s).select { |c| c.start_with?('+') }.map { |f| f[1..-1].chars }.flatten
-      return false if !flags.empty? && has_flags?(m.user, m.channel, *flags)
-
-      m.reply "Désolé, vous n'avez pas le niveau de privilèges requis."
+      expected = Utils.join_multiple(checks.map(&:level_itoa))
+      m.reply "Désolé, vous n'avez pas le niveau de privilèges requis (#{expected})"
       true
     end
 

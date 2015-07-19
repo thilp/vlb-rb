@@ -10,7 +10,7 @@ module VikiLinkBot
     undef_method(:untrust)
 
     def trust(m, input)
-      return if VikiLinkBot::TrustAuthority.reject?(m, '+o')
+      return if VikiLinkBot::TrustAuthority.reject?(m, :op?)
       trusted = []
       input.args.each do |username|
         user = User(username)
