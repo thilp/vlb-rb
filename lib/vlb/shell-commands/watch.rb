@@ -111,7 +111,7 @@ module VikiLinkBot
         VikiLinkBot::Watcher.unregister(old[:wid])
       end
 
-      constraints = watch_parse(str_constraints)
+      constraints = self.class.watch_parse(str_constraints)
       log "Creating new watcher with constraints: #{constraints}"
       wid = VikiLinkBot::Watcher.register(
                                     lambda { |m, _json| m.channel.name == watched_channel && eval(constraints) },
