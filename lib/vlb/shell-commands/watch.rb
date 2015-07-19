@@ -71,9 +71,10 @@ module VikiLinkBot
     end
 
     def watched(m, input)
+      @watched ||= {}
       if input.args.empty?
-        if (@watched ||= {}).empty?
-          m.reply 'Rien actuellement.'
+        if @watched.empty?
+          m.reply '∅'
         else
           m.reply Utils.join_multiple(@watched.keys.map(&:inspect), ', ', ' et ')
         end
