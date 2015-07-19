@@ -61,12 +61,12 @@ module VikiLinkBot
               parent_field = field
             end
           rescue => s
-            m.reply(prefix[:bad] + s)
+            m.reply(prefix[:bad] + s.to_s)
             next
           end
           m.reply(data.is_a?(Hash) ?
                       "#{prefix[:bad] + parent_field} est un dictionnaire. Champs possibles : #{data.keys.join(', ')}" :
-                      prefix[:good] + data)
+                      prefix[:good] + data.to_s)
         end
       end
 
