@@ -86,7 +86,7 @@ module VikiLinkBot
 
       return false if ok_with_one_of?(m, *checks)
 
-      expected = Utils.join_multiple(checks.map(&:to_s).join('+'))
+      expected = Utils.join_multiple(checks.map { |c| c.map(&:to_s).join('+') })
       m.reply "Désolé, vous n'avez pas le niveau de privilèges requis (#{expected})"
       true
     end
