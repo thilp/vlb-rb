@@ -29,7 +29,7 @@ module VikiLinkBot
 
         input.wikis.each do |wiki|
           prefix = {
-              good: Format(:green, "#{query.join('/')} (#{wiki.domain}) = "),
+              good: "#{query.join('/')} (#{wiki.domain}) = ",
               bad: Format(:red, "#{query.join('/')} (#{wiki.domain}) : ")
           }
           answer = wiki.api action: 'query', meta: 'siteinfo', siprop: query.first
@@ -66,7 +66,7 @@ module VikiLinkBot
           end
           m.reply(data.is_a?(Hash) ?
                       "#{prefix[:bad] + parent_field} est un dictionnaire. Champs possibles : #{data.keys.join(', ')}" :
-                      "#{prefix[:good]} = #{data}")
+                      prefix[:good] + data)
         end
       end
 
