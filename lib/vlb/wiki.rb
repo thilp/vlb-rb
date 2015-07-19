@@ -61,7 +61,9 @@ class WikiFactory
       rescue SocketError => err
         raise "impossible de contacter #{domain}: #{err.message}"
       else
-        article_path = (final_url =~ %r{ ^ https?:// [^/]+ ([^?]*) }x) ? $1 : '/wiki'
+        article_path = (final_url =~ %r{ ^ https?:// [^/]+ ([^?]*) }x) ?
+            $1.split('/')[0..-2].join('/') :
+            '/wiki'
         if r.body.scrub =~ %r{ ^ <link \s+ rel="EditURI" .+? href=" ( (?:https?:)?//[^/]+ ) ([^"?]+) }x
           api_url, api_path = $1, $2
           url = api_url.start_with?('//') ? 'https:' + api_url : api_url
