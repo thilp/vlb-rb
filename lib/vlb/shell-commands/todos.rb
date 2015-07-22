@@ -4,14 +4,13 @@ module VikiLinkBot
   class Shell
 
     def todo(m, input)
-      return if VikiLinkBot::TrustAuthority.reject?(m, :authed?)
-      return unless m.message =~ %r< ^ #{@bot.nick} \W+ TODO \W >xi
-      self.class.todos << {
+      return if VikiLinkBot::TrustAuthority.reject?(m, :auth?)
+      (@todos ||= []) << {
           author: m.user.name,
           authed: m.user.authed?,
           date: Time.now,
           channel: m.channel ? m.channel.name : '(privmsg)',
-          message: m.message.sub(%r< ^ #{@bot.nick} \W+ TODO \W* >xi, '')
+          message: input.raw.gsub(/^!#{__method__}\s*/, '')
       }
       m.reply 'todo enregistré !'
     end
@@ -26,7 +25,7 @@ module VikiLinkBot
       else
         @todos.each_with_index do |h, i|
           m.reply "#{i}) " +
-                      Format(:grey, h[:date].to_s) + ' ' + Format(:blue, h[:author] + (h[:authed] ? '*' : '')) +
+                      Format(:grey, h[:date].to_s) + ' ' + Format(:blue, h[:author]) +
                       ' (' + h[:channel] + ') : ' + h[:message]
           sleep 0.6
         end
