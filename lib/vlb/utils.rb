@@ -54,7 +54,7 @@ module VikiLinkBot
     # Copies string, but changes arrays and hashes in place.
     # @param [Hash] json
     def self.unescape_unicode_in_values(json)
-      case json.class
+      case json
         when String
           unescape_unicode(json)
         when Array

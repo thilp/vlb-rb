@@ -104,7 +104,7 @@ module VikiLinkBot
     end
 
     def version(m, tokens)
-      m.reply 'VikiLinkBot::Shell 2.3.9'
+      m.reply 'VikiLinkBot::Shell 2.3.10 -- "Sommeil" -- https://youtu.be/CDUUCIH45NU?t=9m55s'
     end
 
   end
