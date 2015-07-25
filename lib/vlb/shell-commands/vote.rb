@@ -42,7 +42,7 @@ module VikiLinkBot
         section = nil
         content.each_line do |line|
           case line.downcase
-            when /\A(?>=+\s*)(?!\{\{pour|contre|neutre)/
+            when /\A(?>=+\s*)(?!\{\{|pour|contre|neutre)/
               section = nil
             when /\A(?>=+\s*)(?:\{\{)?(pour|contre|neutre)/
               section = $1
