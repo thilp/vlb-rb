@@ -44,9 +44,9 @@ module VikiLinkBot
           case line.downcase
             when /\A(?>=+\s*)(?!\{\{|pour|contre|neutre)/
               section = nil
-            when /\A(?>=+\s*)(?:\{\{)(pour|contre|neutre)?/
+            when /\A(?>=+\s*)(?:\{\{)(pour|contre|neutre)/
               section = $1
-            when /\A(?>#\s*)\{\{(pour|contre|neutre)\b/
+            when /\A(?>#\s*)\{\{(pour|contre|neutre)?\b/
               votes[$1 || section] += 1 if section 
             when /\A(?>#\s*)\w/
               votes[section] += 1 if section
