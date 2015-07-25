@@ -46,7 +46,7 @@ module VikiLinkBot
               section = nil
             when /\A(?>=+\s*)(?:\{\{)?()/
               section = $1
-            when /\A(?>#\s*)\{\{(pour|contre|neutre)\b/
+            when /\A(?>#\s*)\{\{(pour|contre|neutre)?\b/
               votes[$1] += 1 if section
             when /\A(?>#\s*)\w/
               votes[section] += 1 if section
