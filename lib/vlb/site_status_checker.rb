@@ -18,7 +18,7 @@ module VikiLinkBot
     end
 
     # Run the notify_all method each 20 seconds.
-    timer 20, method: :notify_all
+    timer 20, method: :notify_all  # FIXME: add global config
 
     # Check @monitored_sites' statuses and alert all channels the bot is in if necessary.
     def notify_all
@@ -83,7 +83,7 @@ module VikiLinkBot
       raise "invalid certificate validity: #{not_before} is after today" if not_before > now
       raise "invalid certificate validity: #{not_after} is before today" if not_after < now
 
-      raise 'the certificate has changed' if cert != @expected_cert
+      raise 'the certificate has changed' if cert.to_s != @expected_cert.to_s
     end
 
   end
