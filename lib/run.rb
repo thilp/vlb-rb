@@ -1,4 +1,6 @@
-$: << File.expand_path(__dir__ + '/../lib')
+LIBPATH = File.expand_path(__dir__ + '/../lib/')
+MISCPATH = File.expand_path(__dir__ + '/../misc/')
+$: << LIBPATH
 
 require 'cinch'
 require 'optparse'
