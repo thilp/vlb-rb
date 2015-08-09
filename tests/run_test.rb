@@ -1,4 +1,10 @@
 $: << File.expand_path(__dir__ + '/../lib/')
 
-load File.dirname(__FILE__) + '/vlb/vlinq_test.rb'
-load File.dirname(__FILE__) + '/vlb/store_test.rb'
+%w( vlinq
+    store
+    vlisp/reader
+    vlisp/translator
+    vlisp
+).each do |name|
+  load File.dirname(__FILE__) + "/vlb/#{name}_test.rb"
+end

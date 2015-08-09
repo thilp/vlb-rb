@@ -4,6 +4,8 @@ require 'damerau-levenshtein'
 module VikiLinkBot
   module Utils
 
+    Infinity = 1.0 / 0.0
+
     class VLBError < RuntimeError
     end
 
