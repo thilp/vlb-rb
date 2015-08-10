@@ -54,9 +54,9 @@ module VikiLinkBot
             when :regex
               m = @lexers[:regex].match(expr.text)
               flags = []
-              flags << Regexp::MULTILINE if m[2].include?('x')
+              flags << Regexp::EXTENDED if m[2].include?('x')
               flags << Regexp::IGNORECASE if m[2].include?('i')
-              Regexp.new(m[1], flags.reduce(false, :|)).inspect
+              Regexp.new(m[1], flags.reduce(0, :|)).inspect
             when :jsonref
               cocoon(VikiLinkBot::VLINQ.to_s + ".select('#{expr.text}', _json, separator: '/')")
             else
@@ -107,7 +107,6 @@ module VikiLinkBot
         :<= => %w(le <=),
         :!= => %w(notequal !=),
         '='.to_sym => %w(equal ==),
-        :LIKE => %w(like ===),
     }
     @binary_operators.each do |vlisp_name, x|
       meth_name, op = x
@@ -150,6 +149,19 @@ module VikiLinkBot
     def self.generated_if(args) # @api private
       raise InvalidArityError.new(:IF, 3, args.size) if args.size != 3
       cocoon(args[0] + ' ? ' + args[1] + ' : ' + args[2])
+    end
+
+    @all_functions[:LIKE] = :generated_like
+    def self.generated_like(args) # @api private
+      raise InvalidArityError.new(:LIKE, 1..VikiLinkBot::Utils::Infinity, args.size) if args.size < 1
+      var_name = 'a'
+      h = Hash[args.map { |arg| [var_name = var_name.next, arg]}]
+      <<-RUBY
+      begin
+        #{ h.map { |k,v| "#{k} = #{v}"}.join("\n") }
+        #{ h.keys.each_cons(2).map { |a,b| "#{a}.is_a?(Regexp) ^ #{b}.is_a?(Regexp) ? !(#{a} =~ #{b}).nil? : #{a} === #{b}" }.join(' && ') }
+      rescue;false;end
+      RUBY
     end
 
   end

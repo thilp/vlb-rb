@@ -114,6 +114,13 @@ class TestVLispTranslator < Test::Unit::TestCase
     assert_false(my_translate('b/c:nope', _json))
     assert_false(my_translate('b/c:"nope"', _json))
 
+    assert_true(my_translate('b/c:/^bc$/', _json))
+    assert_false(my_translate('b/c:/BC/', _json))
+    assert_true(my_translate('b/c:/BC/i', _json))
+    assert_true(my_translate('b/c:/ b  c /x', _json))
+    assert_true(my_translate('b/c:/ B C/xi', _json))
+    assert_true(my_translate('b/c:/ B C/ix', _json))
+
     assert_false(my_translate('nonexistent:4', _json))
 
     assert_raise_kind_of(VLISP::UnexpectedEOFError) { my_translate('a:', _json) }
