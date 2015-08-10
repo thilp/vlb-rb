@@ -156,12 +156,9 @@ module VikiLinkBot
       raise InvalidArityError.new(:LIKE, 1..VikiLinkBot::Utils::Infinity, args.size) if args.size < 1
       var_name = 'a'
       h = Hash[args.map { |arg| [var_name = var_name.next, arg]}]
-      <<-RUBY
-      begin
-        #{ h.map { |k,v| "#{k} = #{v}"}.join("\n") }
-        #{ h.keys.each_cons(2).map { |a,b| "#{a}.is_a?(Regexp) ^ #{b}.is_a?(Regexp) ? !(#{a} =~ #{b}).nil? : #{a} === #{b}" }.join(' && ') }
-      rescue;false;end
-      RUBY
+      'begin; ' + h.map { |k,v| "#{k} = #{v}"}.join('; ') + '; ' + h.keys.each_cons(2).map do |a, b|
+        "#{a}.is_a?(Regexp) ^ #{b}.is_a?(Regexp) ? !(#{a} =~ #{b}).nil? : #{a} === #{b}"
+      end.join(' && ') + ' ;rescue;false;end'
     end
 
   end

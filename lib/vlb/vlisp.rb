@@ -13,6 +13,11 @@ module VikiLinkBot
   # @since 2.3.10
   module VLisp
 
+    class AnticipatedError < VLispError; end
+
+    class AlwaysTrueError < AnticipatedError; end
+    class AlwaysFalseError < AnticipatedError; end
+
     # Translates one or more VLisp expressions into Ruby code.
     #
     # This method is a wrapper around {::tokenize}, {::parse_expr} and {::translate_expr}.

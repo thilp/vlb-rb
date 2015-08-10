@@ -35,14 +35,6 @@ module VikiLinkBot
 
     class VLispError < VikiLinkBot::Utils::VLBError; end
 
-    class TranslationError < VLispError; end
-    class AnticipatedError < VLispError; end
-
-
-
-    class AlwaysTrueError < AnticipatedError; end
-    class AlwaysFalseError < AnticipatedError; end
-
   end
 end
 
