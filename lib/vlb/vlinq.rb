@@ -102,7 +102,7 @@ module VikiLinkBot
       end
     end
 
-    # Similar to {#select}, but writes a value instead of reading it.
+    # Similar to {::select}, but writes a value instead of reading it.
     #
     # @param [String] query
     # @param [Object] value
