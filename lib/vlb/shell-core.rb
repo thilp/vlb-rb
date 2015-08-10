@@ -3,8 +3,10 @@ require 'httpclient'
 require 'vlb/utils'
 require 'vlb/wiki'
 
-Dir.glob(__dir__ + '/shell-commands/*.rb').each do |fname|
-  require fname
+unless $DONT_LOAD_SHELL_COMMANDS
+  Dir.glob(__dir__ + '/shell-commands/*.rb').each do |fname|
+    require fname
+  end
 end
 
 module VikiLinkBot
@@ -15,21 +17,14 @@ module VikiLinkBot
     attr_reader :raw
 
     def self.split(str)
-      tokens = str.scan %r{
-        @[A-Za-z0-9\{][\w.-{,}]* (?!<[\{-]) |
-        [A-Za-z/\{][^\s:()]* (?: : (?: (?!/) [^\s"()]+ |
-                                       \#[tf] |
-                                       /(?: [^/\\]+ | \\. )*/i? |
-                                       "(?: [^"\\]+ | \\. )*" ) )? |
-        \( | \) |
-        "(?: [^"\\]+ | \\. )*" |
-        (?: \S (?<! [()":] ) )+
+      tokens = str.scan %r{ [^\s"\{\}]* (?> \{ [^"\}]* \} [^\s"\{\}]* )+  # something with brace expansion (but not quoted)
+        | (?!< \S ) @[A-Za-z0-9][\w\.-]* (?!<[-])  # wiki argument
+        | " (?> [^"\\]+ | \\. )* "  # quoted string
+        | \S+  # anything else between blanks
       }x
-      tokens.map! do |t|  # apply brace expansion, except on regexps!
-        if t =~ %r{ ^ ([\w\{\},]+) ( : ["/] .+ ) $ }x
-          Utils.expand_braces($1 + $2.tr('{} ', "\0\1\2")).tr("\0\1", '{}').split.map { |e| e.tr("\2", ' ') }
-        elsif t =~ /^"/
-          t[1..-2]  # remove the now useless quotes
+      tokens.map! do |t|  # apply brace expansion
+        if t =~ /^"/ # quoted strings
+          t[1..-2]  # remove the now useless quotes, but do not apply brace expansion
         else
           Utils.expand_braces(t).split
         end
