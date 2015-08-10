@@ -25,6 +25,13 @@ class Array
 end
 
 module VikiLinkBot
+
+  # The VLINQ module contains functions that *create*, *read*, *update* or *delete*
+  # (CRUD[https://en.wikipedia.org/wiki/Create,_read,_update_and_delete]) data from *containers*, relieving
+  # the developer from thinking about the exact container type and how to perform the specific operation on it.
+  # {Hence the name}[https://en.wikipedia.org/wiki/Language_Integrated_Query].
+  #
+  # @since 2.4.0
   module VLINQ
 
     class VLINQError < VikiLinkBot::Utils::VLBError; end

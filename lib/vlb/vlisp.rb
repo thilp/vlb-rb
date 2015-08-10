@@ -10,7 +10,7 @@ module VikiLinkBot
   # language, useful to express predicates for the +!watch+ command.
   # Methods in this module simply translate VLisp expressions to Ruby code, which can then be executed using +eval+.
   #
-  # @since 2.3.10
+  # @since 2.4.0
   module VLisp
 
     class AnticipatedError < VLispError; end
