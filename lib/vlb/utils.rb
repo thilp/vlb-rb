@@ -4,6 +4,8 @@ require 'damerau-levenshtein'
 module VikiLinkBot
   module Utils
 
+    Infinity = 1.0 / 0.0
+
     class VLBError < RuntimeError
     end
 
@@ -29,8 +31,8 @@ module VikiLinkBot
     def self.expand_braces(str)
       new_str = str
       loop do
-        tmp = new_str.gsub /(\S*) \{ ( [^,\}]* (?: , [^,\}]* )+ ) \} (\S*)/x do
-          $2.split(',').map { |t| $1 + t + $3 }.join(' ')
+        tmp = new_str.gsub /(\S*) \{ ( [^,\}]* (?> , [^,\}]* )+ ) \} (\S*)/x do
+          $2.split(',', -1).map { |t| $1 + t + $3 }.reject(&:empty?).join(' ')
         end
         break if tmp == new_str
         new_str = tmp

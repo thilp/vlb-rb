@@ -1,3 +1,5 @@
+require 'vlb/utils'
+
 class String
   def integer?
     begin
@@ -25,7 +27,7 @@ end
 module VikiLinkBot
   module VLINQ
 
-    class VLINQError < RuntimeError; end
+    class VLINQError < VikiLinkBot::Utils::VLBError; end
     class UnsupportedContainerError < VLINQError
       attr_reader :type
       def initialize(type)
@@ -70,6 +72,8 @@ module VikiLinkBot
     #
     # @param [String] query a sequence of tokens (separated by separator) describing how to access the targeted value
     # @param [Object] source the (possibly nested) container in which to search for the targeted value
+    # @option options [TrueClass,FalseClass] create (false) whether to create a queried but non-existent path
+    # @option options [String] separator ('/') what stands between each query part
     def self.select(query, source, options={})
       options = {create: false, separator: '/'}.merge(options)
       key, ks = query.split(options[:separator], 2)
@@ -98,7 +102,7 @@ module VikiLinkBot
       end
     end
 
-    # Similar to VLINQ#select, but writes a value instead of reading it.
+    # Similar to {::select}, but writes a value instead of reading it.
     #
     # @param [String] query
     # @param [Object] value
