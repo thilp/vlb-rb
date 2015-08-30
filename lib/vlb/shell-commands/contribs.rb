@@ -3,7 +3,7 @@ module VikiLinkBot
 
     def contribs(m, input)
       if input.args.empty?
-        m.reply "Usage : !#{__method__} [<wiki>+] <pseudo>+"
+        m.reply 'Donnez-moi au moins un pseudonyme ou une IP !'
         return
       end
       input.args.each do |username|
