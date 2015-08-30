@@ -83,7 +83,7 @@ module VikiLinkBot
 
       return if input.empty?
 
-      if respond_to?(input.command)
+      if public_methods(false).include?(input.command)
         debug "Running command #{input.command} with arguments #{input.args} and wikis #{input.wikis.map(&:base_url)}"
         begin
           method(input.command).call(m, input)
@@ -92,14 +92,14 @@ module VikiLinkBot
           log(e.message + ' -- ' + e.backtrace.join("\n"))
         end
       else
-        guesses = Utils.guess(input.command.to_s, methods).map { |g| "!#{g}" }
+        guesses = Utils.guess(input.command.to_s, public_methods(false)).map { |g| "!#{g}" }
         m.reply "Vouliez-vous dire #{Utils.join_multiple(guesses)} ?" unless guesses.empty?
       end
 
     end
 
     def version(m, tokens)
-      m.reply 'VikiLinkBot::Shell 2.4.0 -- "Sleep" -- https://youtu.be/CDUUCIH45NU?t=9m55s'
+      m.reply 'VikiLinkBot::Shell 2.4.0 — « Mon enfant, ma sœur »'
     end
 
   end
