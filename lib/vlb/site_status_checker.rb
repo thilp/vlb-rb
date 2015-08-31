@@ -50,21 +50,27 @@ module VikiLinkBot
     # @return [Hash<Addressable::URI, Exception>] a URL => exception mapping. The exception part is nil if no errors were found.
     def self.find_errors
       statuses = {}
+      lock = Mutex.new
+      threads = []
       @monitored_sites.each do |uri|
-        statuses[uri] = begin
-          redirects = 0
-          r = @httpc.head(uri)
-          while r.redirect?
-            redirects += 1
-            raise SocketError.new('too many redirects') if redirects > @max_redirects
-            r = @httpc.head(r.headers['Location'])
+        threads << Thread.new do
+          res = begin
+            redirects = 0
+            r = @httpc.head(uri)
+            while r.redirect?
+              redirects += 1
+              raise SocketError.new('too many redirects') if redirects > @max_redirects
+              r = @httpc.head(r.headers['Location'])
+            end
+            [:check_http_status, :check_tls_cert].each { |f| send(f, r) }
+            nil
+          rescue => e
+            e
           end
-          [:check_http_status, :check_tls_cert].each { |f| send(f, r) }
-          nil
-        rescue => e
-          e
+          lock.synchronize { statuses[uri] = res }
         end
       end
+      threads.each(&:join)
       statuses
     end
 
