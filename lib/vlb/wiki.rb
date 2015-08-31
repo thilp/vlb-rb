@@ -36,6 +36,8 @@ class WikiFactory
                    'fr.wikipedia.org'
                  when /^(\w+)wp$/, /^(simple)$/
                    "#{$1}.wikipedia.org"
+                 when /^(\w+)wikt$/
+                   "#{$1}.wiktionary.org"
                  when 'meta'
                    'meta.wikimedia.org'
                  else
@@ -50,22 +52,25 @@ class WikiFactory
       Wiki.new "https://#{domain}", '/w/api.php', '/wiki', self
     else
       begin
-        m_api, m_articles = nil, nil
-        @httpc.get_content('http://' + domain) do |chunk|
-          chunk.scrub! '<?INVALID ENCODING!?>'
-          m_api ||= %r{^<link rel="EditURI".+?href="((?:https?:)?//[^/]+)([^"?]+)}.match chunk
-          m_articles ||= %r{^<link rel="alternate" hreflang="x-default" href="((/[^"/]+)+)/}.match chunk
-          break if m_api && m_articles
+        r, redirects, max_redirects = @httpc.get(final_url = 'http://' + domain), 0, 5
+        while r.redirect?
+          redirects += 1
+          raise SocketError.new('too many redirects') if redirects > max_redirects
+          r = @httpc.get(final_url = r.headers['Location'])
         end
       rescue SocketError => err
         raise "impossible de contacter #{domain}: #{err.message}"
       else
-        if m_api
-          url = m_api[1].start_with?('//') ? 'https:' + m_api[1] : m_api[1]
-          Wiki.new url, m_api[2], (m_articles ? m_articles[1] : ''), self
+        article_path = (final_url =~ %r{ ^ https?:// [^/]+ ([^?]*) }x) ?
+            $1.split('/')[0..-2].join('/') :
+            '/wiki'
+        if r.body.scrub =~ %r{ ^ <link \s+ rel="EditURI" .+? href=" ( (?:https?:)?//[^/]+ ) ([^"?]+) }x
+          api_url, api_path = $1, $2
+          url = api_url.start_with?('//') ? 'https:' + api_url : api_url
+          Wiki.new url, api_path, article_path, self
         else
           if @httpc.get('http://' + domain + '/w/api.php').ok?  # last chance!
-            Wiki.new('http://' + domain, '/w/api.php', '/wiki', self)
+            Wiki.new('http://' + domain, '/w/api.php', article_path, self)
           else
             raise "impossible de trouver l'API de #{domain}"
           end
@@ -94,6 +99,7 @@ class Wiki
   def api(params_hash)
     method = params_hash.key?(:method) ? params_hash.delete(:method) : :get
     params_hash[:format] = 'json'
+    puts "Wiki#api request to #{@api_url} with params #{params_hash}"
     res = @factory.jsonc.request(method, @api_url, params_hash)
     raise "#{res.status} #{res.reason}" unless res.ok?
     res.content

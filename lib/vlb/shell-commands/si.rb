@@ -1,7 +1,7 @@
 module VikiLinkBot
   class Shell
 
-    def si(m, tokens)
+    def si(m, _)
       wiki = WikiFactory.instance.get('fr.vikidia.org')
       answer = wiki.api action: 'query', prop: 'categoryinfo', indexpageids: 1,
                         titles: 'Catégorie:Suppression_immédiate'

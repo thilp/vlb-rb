@@ -1,5 +1,6 @@
 require 'cinch'
 require 'json'
+require 'vlb/utils'
 
 module VikiLinkBot
 
@@ -22,25 +23,29 @@ module VikiLinkBot
       return unless self.class.trusted_sources.key?(chan_name)
       return unless self.class.trusted_sources[chan_name].include?(m.user.name)
 
-      # Careful, the message could be incomplete JSON
-      buffer = @source_buffer[chan_name] || ''
-
-      begin
-        full_json = JSON.parse(buffer + m.message)
-      rescue JSON::ParserError
-        if m.message.start_with?('{')
-          begin
-            full_json = JSON.parse(m.message)  # you never know ...
-          rescue JSON::ParserError
-            @source_buffer[chan_name] = m.message  # replace the old buffer with m.message for the next chunk
+      full_json = nil
+      synchronize(:json) do
+        # Careful, the message could be incomplete JSON
+        buffer = @source_buffer[chan_name] || ''
+        begin
+          full_json = JSON.parse(buffer + m.message)
+        rescue JSON::ParserError
+          if m.message.start_with?('{')
+            begin
+              full_json = JSON.parse(m.message) # you never know ...
+            rescue JSON::ParserError
+              @source_buffer[chan_name] = m.message # replace the old buffer with m.message for the next chunk
+              return
+            end
+          else
+            @source_buffer[chan_name] = buffer + m.message # ok, seems this is going to span more than 2 chunks ...
             return
           end
-        else
-          @source_buffer[chan_name] = buffer + m.message  # ok, seems this is going to span more than 2 chunks ...
-          return
         end
+        @source_buffer[chan_name] = ''
       end
-      @source_buffer[chan_name] = ''
+      full_json = VikiLinkBot::Utils.unescape_unicode_in_values(full_json)
+
       self.class.registry.values.each do |predicate, callback|
         if predicate.call(m, full_json) && callback
           callback.call(m, full_json)

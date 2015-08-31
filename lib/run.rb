@@ -1,10 +1,13 @@
-$: << File.expand_path(__dir__ + '/../lib')
+LIBPATH = File.expand_path(__dir__ + '/../lib/')
+MISCPATH = File.expand_path(__dir__ + '/../misc/')
+$: << LIBPATH
 
 require 'cinch'
 require 'optparse'
 require 'vlb/shell-core'
 require 'vlb/wikilink_resolver'
 require 'vlb/watcher'
+require 'vlb/site_status_checker'
 
 options = {}
 
@@ -37,7 +40,23 @@ bot = Cinch::Bot.new do
     c.password = options[:password] if options[:password]
     c.server = options[:server]
     c.channels = options[:chans] + VikiLinkBot::Watcher.trusted_sources.keys
-    c.plugins.plugins = [VikiLinkBot::Shell, VikiLinkBot::WikiLinkResolver, VikiLinkBot::Watcher]
+    c.plugins.plugins = [VikiLinkBot::Shell, VikiLinkBot::WikiLinkResolver,
+                         VikiLinkBot::Watcher, VikiLinkBot::StatusChecker]
+  end
+end
+
+PLUGIN_SHELL = bot.plugins.find { |e| e.is_a?(VikiLinkBot::Shell) }
+if PLUGIN_SHELL
+  {
+      'VD:DA / VD:DB' => 'title:/^Vikidia:Demandes aux (admin|bureaucrates)/ (NOT log_type:patrol)',
+      'Blanchiment' => '(< length/new 20) (> (/ length/old length/new) 3.0)'
+  }.each do |wname, wconstraints|
+    bot.loggers.info "Registering !watch #{wname}: #{wconstraints}"
+    PLUGIN_SHELL.watch_register(
+        wname, '#vikidia-rc-json', Channel('#vikidia'),
+        VikiLinkBot::Input.split(wconstraints),
+        '[[' + Cinch::Formatting.format(:blue, '${title}') + ']] par ' +
+            Cinch::Formatting.format(:green, '${user}') + ' : « ${comment} »')
   end
 end
 

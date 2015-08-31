@@ -1,6 +1,7 @@
 require 'cinch'
 require 'vlb/wiki'
 require 'vlb/utils'
+require 'vlb/watcher'
 
 module VikiLinkBot
   class WikiLinkResolver
@@ -9,6 +10,7 @@ module VikiLinkBot
     match /\[\[/, strip_colors: true, use_prefix: false
 
     def execute(m)
+      return if m.channel && VikiLinkBot::Watcher.trusted_sources.key?(m.channel.name)
       wikilinks = wikilinks_in(Utils.expand_braces(m.message))
       update_wikilink_states(wikilinks)
       m.reply wikilinks.join(' · ')
@@ -29,7 +31,7 @@ module VikiLinkBot
 
         hash = [wiki, pagename]
         if links[hash]
-          links[hash] = Wikilink.new(wiki, pagename, check) if check && links[hash].status == 0
+          links[hash] = Wikilink.new(wiki, pagename, check) if check && links[hash].state == 0
         else
           links[hash] = Wikilink.new(wiki, pagename, check)
         end

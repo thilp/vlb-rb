@@ -46,5 +46,28 @@ module VikiLinkBot
           possibilities.first
     end
 
+    # @param [String] str
+    def self.unescape_unicode(str)
+      str.gsub(/\\u([A-Fa-f0-9]{4})/) { [$1].pack('H*').unpack('n*').pack('U*') }
+    end
+
+    # Copies string, but changes arrays and hashes in place.
+    # @param [Hash] json
+    def self.unescape_unicode_in_values(json)
+      case json
+        when String
+          unescape_unicode(json)
+        when Array
+          json.map!(&:unescape_unicode_in_values)
+        when Hash
+          json.each do |k, v|
+            json[k] = unescape_unicode_in_values(v)
+          end
+          json
+        else
+          raise "unsupported type #{json.class}"
+      end
+    end
+
   end
 end
