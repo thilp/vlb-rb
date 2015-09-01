@@ -3,6 +3,12 @@ module VikiLinkBot
 
     {
         aide: 'https://github.com/thilp/vlb-rb'
+        rc: 'RC : #vikidia-recentchanges',
+        mypage: 'https://fr.vikidia.org/wiki/Special:MyPage',
+        gazette: 'https://fr.vikidia.org/wiki/Vikidia:Gazette',
+        pas: 'https://fr.vikidia.org/wiki/Vikidia:Pages_%C3%A0_supprimer',
+        block: 'Bloquer un utilisateur (administrateurs) : https://fr.vikidia.org/wiki/Sp%C3%A9cial:Bloquer',
+        accueil: 'https://fr.vikidia.org/wiki/Vikidia:Accueil',
     }.each do |k, v|
       class_eval <<-RUBY
         def #{k}(m, *_)
