@@ -2,7 +2,7 @@ module VikiLinkBot
   class Shell
 
     {
-        aide: 'https://github.com/thilp/vlb-rb'
+        aide: 'https://github.com/thilp/vlb-rb',
         rc: 'RC : #vikidia-recentchanges',
         mypage: 'https://fr.vikidia.org/wiki/Special:MyPage',
         gazette: 'https://fr.vikidia.org/wiki/Vikidia:Gazette',
