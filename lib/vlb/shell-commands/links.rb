@@ -8,7 +8,8 @@ module VikiLinkBot
         gazette: 'https://fr.vikidia.org/wiki/Vikidia:Gazette',
         pas: 'https://fr.vikidia.org/wiki/Vikidia:Pages_%C3%A0_supprimer',
         block: 'Bloquer un utilisateur (administrateurs) : https://fr.vikidia.org/wiki/Sp%C3%A9cial:Bloquer',
-        accueil: 'https://fr.vikidia.org/wiki/Vikidia:Accueil',
+        accueil: 'https://fr.vikidia.org',
+        wikipédia: 'https://fr.wikipedia.org',
     }.each do |k, v|
       class_eval <<-RUBY
         def #{k}(m, *_)
