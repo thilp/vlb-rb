@@ -1,5 +1,6 @@
 require 'vlb/vlinq'
 require 'vlb/vlisp/reader'
+require 'vlb/vlisp/snippet'
 require 'vlb/vlisp/translator'
 require 'vlb/vlisp/utils'
 require 'vlb/utils'

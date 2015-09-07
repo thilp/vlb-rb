@@ -66,7 +66,7 @@ module VikiLinkBot
         input.args.each do |name|
           if @watched.include?(name)
             w = @watched[name]
-            m.reply "#{name} (##{w[:wid]}) : #{w[:constraints]}"
+            m.reply "#{name} (##{w[:wid]}) : #{w[:snippet].source}"
           else
             m.reply "Je ne connais pas #{name.inspect}"
           end
@@ -96,16 +96,16 @@ module VikiLinkBot
         VikiLinkBot::Watcher.unregister(old[:wid])
       end
 
-      constraints = VikiLinkBot::VLisp.lisp2ruby(str_constraints, enclose_with_and: true, check_anticipated: true)
-      log "Creating new watcher with constraints: #{constraints}"
+      snippet = VikiLinkBot::VLisp::Snippet.new(str_constraints)
+      log "Creating new watcher with constraints: #{snippet.source}"
       wid = VikiLinkBot::Watcher.register(
-                                    lambda { |m, _json| m.channel.name == watched_channel && eval(constraints) },
+                                    lambda { |m, _json| m.channel.name == watched_channel && snippet.satisfied?(_json) },
                                     lambda do |_, _json|
                                       comment = self.class.sprintf(output_format, _json)
                                       notif_channel.send("[watch] #{watch_name}" + (comment.empty? ? '' : " - #{comment}"))
                                     end
       )
-      @watched[watch_name] = {wid: wid, constraints: str_constraints, code: constraints}
+      @watched[watch_name] = {wid: wid, snippet: snippet}
     end
 
     # @return [String]
