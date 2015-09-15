@@ -1,0 +1,29 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    addressable (2.3.8)
+    cinch (2.2.6)
+    damerau-levenshtein (1.1.0)
+      bundler (~> 1.7)
+      json (~> 1.8)
+      rake (~> 10.4)
+      rake-compiler (~> 0.9)
+    httpclient (2.6.0.1)
+    json (1.8.3)
+    rake (10.4.2)
+    rake-compiler (0.9.5)
+      rake
+    safe_yaml (1.0.4)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  addressable
+  cinch (~> 2.2)
+  damerau-levenshtein
+  httpclient
+  safe_yaml
+
+BUNDLED WITH
+   1.10.6
