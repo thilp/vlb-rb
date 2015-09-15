@@ -24,7 +24,7 @@ module VikiLinkBot::Shell
     end
 
     def initialize(str)
-      @raw = str
+      @raw = str.taint
       @tokens = self.class.split(str)
     end
 
