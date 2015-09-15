@@ -9,7 +9,7 @@ unless $DONT_LOAD_SHELL_COMMANDS
   end
 end
 
-module VikiLinkBot
+module VikiLinkBot::Shell
 
   class Shell
     include Cinch::Plugin

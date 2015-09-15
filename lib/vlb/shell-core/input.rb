@@ -1,7 +1,7 @@
 require 'vlb/wiki'
 require 'vlb/utils'
 
-module VikiLinkBot
+module VikiLinkBot::Shell
   class Input
     include Enumerable
 
