@@ -22,7 +22,7 @@ module VikiLinkBot
           kind = guesses.first.to_sym
         else
           m.reply(guesses.empty? ?
-              "Désolé, je ne connais pas #{kind} mais #{kinds.keys.join(', ')}." :
+              "Désolé, je ne connais pas #{kind} mais #{kinds.keys.join(', ')} et leurs abbréviations." :
               "Je ne connais pas #{kind}, vouliez-vous plutôt dire #{Utils.join_multiple(guesses)} ?")
           return
         end
