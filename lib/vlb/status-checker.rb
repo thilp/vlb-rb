@@ -64,13 +64,13 @@ module VikiLinkBot
             r = @httpc.head(uri)
             while r.redirect?
               redirects += 1
-              raise SocketError.new("too many redirects (#{redirects})") if redirects > @max_redirects
+              raise SocketError.new("trop de redirections (#{redirects})") if redirects > @max_redirects
               r = @httpc.head(r.headers['Location'])  # retry
             end
             [:check_http_status, :check_tls_cert].each { |f| send(f, r) }
             nil
           rescue HTTPClient::ReceiveTimeoutError
-            "waited more than #{@httpc.receive_timeout}s"
+            "délai d'attente écoulé (#{@httpc.receive_timeout} s)"
           rescue => e
             e
           end
@@ -82,19 +82,19 @@ module VikiLinkBot
     end
 
     def self.check_http_status(r)
-      raise "unexpected HTTP status #{r.status}" if r.status / 100 != 2
+      raise "statut HTTP inattendu (#{r.status})" if r.status / 100 != 2
     end
 
     def self.check_tls_cert(r)
       cert = r.peer_cert
-      raise 'no TLS certificate' if cert.nil?
+      raise 'pas de certificat TLS' if cert.nil?
 
       now = Time.now
       not_before, not_after = cert.not_before, cert.not_after
-      raise "invalid certificate validity: #{not_before} is after today" if not_before > now
-      raise "invalid certificate validity: #{not_after} is before today" if not_after < now
+      raise "certificat invalide : inutilisable avant #{not_before}" if not_before > now
+      raise "certificat invalide : inutilisable après #{not_after}" if not_after < now
 
-      raise 'the certificate has changed' if cert.to_s != @expected_cert.to_s
+      raise 'le certificat a changé' if cert.to_s != @expected_cert.to_s
     end
 
   end
