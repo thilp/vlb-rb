@@ -16,7 +16,11 @@ module VikiLinkBot
     @max_redirects = 5
     @expected_cert = OpenSSL::X509::Certificate.new(File.read(::MISCPATH + '/vikidia.pem'))
     @last_statuses = nil
-    @in_progress = Mutex.new  # locked when a thread is performing checks; other threads then simply give up
+    
+    def initialize(*args)
+      super
+      @in_progress = Mutex.new  # locked when a thread is performing checks; other threads then simply give up
+    end
 
     # Run the notify_all method each 20 seconds.
     timer 20, method: :notify_all  # FIXME: add global config
