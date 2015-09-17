@@ -1,4 +1,4 @@
-require 'vlb/site_status_checker'
+require 'vlb/status-checker'
 
 module VikiLinkBot
   class Shell
