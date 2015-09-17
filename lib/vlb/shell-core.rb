@@ -104,7 +104,7 @@ module VikiLinkBot
     end
 
     def version(m, tokens)
-      m.reply 'VikiLinkBot::Shell 2.4.0 — « Mon enfant, ma sœur »'
+      m.reply 'VikiLinkBot::Shell 2.4.1 — « Songe à la douceur »'
     end
 
   end
