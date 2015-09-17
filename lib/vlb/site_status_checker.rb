@@ -8,22 +8,27 @@ module VikiLinkBot
   class StatusChecker
     include Cinch::Plugin
 
+    # FIXME: add global config
     @monitored_sites = %w( fr es it en ca eu ru scn ).map { |s| Addressable::URI.parse("https://#{s}.vikidia.org") }
     @httpc = HTTPClient.new
+    @httpc.receive_timeout = 5  # if the site does not respond in under this delay, it likely has a problem
     # @httpc.redirect_uri_callback = ->(_, res) { res.header['location'][0] }  # FIXME: fix Vikidia's redirects
     @max_redirects = 5
-    @expected_cert = OpenSSL::X509::Certificate.new(File.read(::MISCPATH + '/vikidia.pem'))  # FIXME: add global config
+    @expected_cert = OpenSSL::X509::Certificate.new(File.read(::MISCPATH + '/vikidia.pem'))
     @last_statuses = nil
+    @in_progress = Mutex.new  # locked when a thread is performing checks; other threads then simply give up
 
     # Run the notify_all method each 20 seconds.
     timer 20, method: :notify_all  # FIXME: add global config
 
     # Check @monitored_sites' statuses and alert all channels the bot is in if necessary.
     def notify_all
-      msg = self.class.format_errors(self.class.filter_errors(self.class.find_errors))
-      return if msg.nil?
-      bot.channels.each do |chan|
-        chan.send(msg)
+      @in_progress.try_synchronize do
+        msg = self.class.format_errors(self.class.filter_errors(self.class.find_errors))
+        return if msg.nil?
+        bot.channels.each do |chan|
+          chan.send(msg)
+        end
       end
     end
 
@@ -33,7 +38,7 @@ module VikiLinkBot
     def self.format_errors(statuses)
       return if statuses.nil?
       msg = statuses.reject { |_, status| status.nil? }.
-                     map { |uri, status| "#{uri.host}: " + Cinch::Formatting.format(:red, status.message) }.
+                     map { |host, status| "#{host}: " + Cinch::Formatting.format(:red, status) }.
                      join(' | ')
       '[VSC] ' + (msg.empty? ? Cinch::Formatting.format(:green, '✓') : msg)
     end
@@ -59,15 +64,17 @@ module VikiLinkBot
             r = @httpc.head(uri)
             while r.redirect?
               redirects += 1
-              raise SocketError.new('too many redirects') if redirects > @max_redirects
-              r = @httpc.head(r.headers['Location'])
+              raise SocketError.new("too many redirects (#{redirects})") if redirects > @max_redirects
+              r = @httpc.head(r.headers['Location'])  # retry
             end
             [:check_http_status, :check_tls_cert].each { |f| send(f, r) }
             nil
+          rescue HTTPClient::ReceiveTimeoutError
+            "waited more than #{@httpc.receive_timeout}s"
           rescue => e
             e
           end
-          lock.synchronize { statuses[uri] = res }
+          lock.synchronize { statuses[uri.host] = res.to_s }  # force stringification because it will be compared later
         end
       end
       threads.each(&:join)
@@ -92,4 +99,15 @@ module VikiLinkBot
 
   end
 
+end
+
+class Mutex
+  def try_synchronize
+    return unless try_lock
+    begin
+      yield
+    ensure
+      unlock
+    end
+  end
 end
