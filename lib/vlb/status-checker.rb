@@ -78,7 +78,7 @@ module VikiLinkBot
           rescue => e
             e
           end
-          lock.synchronize { statuses[uri.host] = res.to_s }  # force stringification because it will be compared later
+          lock.synchronize { statuses[uri.host] = res.nil? ? nil : res.to_s }  # force stringification because it will be compared later
         end
       end
       threads.each(&:join)
