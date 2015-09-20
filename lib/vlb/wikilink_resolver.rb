@@ -7,19 +7,34 @@ module VikiLinkBot
   class WikiLinkResolver
     include Cinch::Plugin
 
-    match /\[\[/, strip_colors: true, use_prefix: false
+    match /\[\[|\(\(/, strip_colors: true, use_prefix: false
 
     def execute(m)
       return if m.channel && VikiLinkBot::Watcher.trusted_sources.key?(m.channel.name)
-      wikilinks = wikilinks_in(Utils.expand_braces(m.message))
-      update_wikilink_states(wikilinks)
+      wikilinks = self.class.wikilinks_in(Utils.expand_braces(m.message))
+      self.class.update_wikilink_states(wikilinks)
       m.reply wikilinks.join(' · ')
     end
 
-    def wikilinks_in(str)
+    def self.wikilinks_in(str)
       wikis = WikiFactory.instance
+      find_wikilinks(str, %w<[[ ]]>, wikis) + find_wikilinks(str, %w<(( ))>, wikis)
+    end
+
+    def self.find_wikilinks(str, braces, wikis)
       links = {}
-      str.scan /\[\[  ( [^\[\]\|]+ )  (?: \| [^\]]* )?  \]\]/x do |pagename, _|
+      b = {a: :first, z: :last}.map { |k, v| [k, braces.send(v).chars.map { |c| Regexp.quote(c) }] }.to_h
+      ctnt = %r%
+        (?: (?! #{b[:z].join} (?! #{b[:z].first} ) |
+                \| )
+            . )
+      %x
+      str.scan %r%
+               #{b[:a].join}
+               ( #{ctnt}+ )
+               (?: \| #{ctnt}* )?
+               #{b[:z].join}
+               %x do |pagename, _|
         pagename.strip!
 
         # A ":" prefix means that we don't want to check whether the page exists.
@@ -40,7 +55,7 @@ module VikiLinkBot
       links.values
     end
 
-    def update_wikilink_states(links)
+    def self.update_wikilink_states(links)
       wikis = {}
       links.each { |link| (wikis[link.wiki] ||= []) << link if link.state == 1 }  # Builds a {wiki => [links]} map
       wikis.each do |wiki, link_list|
