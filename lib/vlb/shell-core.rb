@@ -1,5 +1,6 @@
 require 'cinch'
 require 'httpclient'
+require 'jsonclient'
 require 'vlb/utils'
 require 'vlb/wiki'
 
@@ -81,6 +82,7 @@ module VikiLinkBot
     def initialize(*_)
       super
       @httpc = HTTPClient.new
+      @jsonc = JSONClient.new
     end
 
     def self.ignore?(m)
