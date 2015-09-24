@@ -27,6 +27,11 @@ class WikiFactory
   private :initialize
 
   def get(domain=nil)
+    domain = self.class.expand_domain(domain)
+    @wikis[domain] ||= new_from_domain(domain)
+  end
+
+  def self.expand_domain(domain)
     domain = domain ? domain.chomp : ''
     unless domain.include? '.'
       domain = case domain
@@ -44,7 +49,7 @@ class WikiFactory
                    "#{domain}.vikidia.org"
                end
     end
-    @wikis[domain] ||= new_from_domain(domain)
+    domain
   end
 
   def new_from_domain(domain)

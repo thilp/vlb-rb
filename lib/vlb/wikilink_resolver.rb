@@ -7,20 +7,48 @@ module VikiLinkBot
   class WikiLinkResolver
     include Cinch::Plugin
 
-    match /\[\[/, strip_colors: true, use_prefix: false
+    match /\[\[|\(\(/, strip_colors: true, use_prefix: false
 
     def execute(m)
       return if m.channel && VikiLinkBot::Watcher.trusted_sources.key?(m.channel.name)
-      wikilinks = wikilinks_in(Utils.expand_braces(m.message))
-      update_wikilink_states(wikilinks)
+      wikilinks = self.class.wikilinks_in(Utils.expand_braces(m.message))
+      self.class.update_wikilink_states(wikilinks)
       m.reply wikilinks.join(' · ')
     end
 
-    def wikilinks_in(str)
+    class BracePair
+      attr_reader :opening, :closing
+
+      # @param [String] opening
+      # @param [String] closing
+      def initialize(opening, closing)
+        @opening, @closing = [opening, closing].map { |x| x.chars.map { |c| Regexp.quote(c) } }
+      end
+
+      def matcher
+        content = %r{
+        (?: (?! #{closing.join}
+                (?! #{closing.first} )
+              | \| )
+            . )
+      }x
+
+        %r{
+        #{opening.join}
+        ( #{content}+ )
+        (?: \| #{content}* )?
+        #{closing.join}
+        }x
+      end
+    end
+
+    REGEX = Regexp.new( [%w<[[ ]]>, %w<(( ))>].map { |braces| BracePair.new(*braces).matcher }.join('|') )
+
+    def self.wikilinks_in(str)
       wikis = WikiFactory.instance
       links = {}
-      str.scan /\[\[  ( [^\[\]\|]+ )  (?: \| [^\]]* )?  \]\]/x do |pagename, _|
-        pagename.strip!
+      str.scan(REGEX) do |captures|
+        pagename = captures.compact.first.strip
 
         # A ":" prefix means that we don't want to check whether the page exists.
         check = true
@@ -40,7 +68,7 @@ module VikiLinkBot
       links.values
     end
 
-    def update_wikilink_states(links)
+    def self.update_wikilink_states(links)
       wikis = {}
       links.each { |link| (wikis[link.wiki] ||= []) << link if link.state == 1 }  # Builds a {wiki => [links]} map
       wikis.each do |wiki, link_list|
