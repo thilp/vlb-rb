@@ -83,10 +83,16 @@ module VikiLinkBot
       @httpc = HTTPClient.new
     end
 
+    def self.ignore?(msg)
+      m.user.host.include?('78.225.229.37') || m.user.authname == 'Lucas0231'
+    end
+
     def read_eval(m, super_tokens=nil)
       input = super_tokens || Input.new(m.message)
 
       return if input.empty?
+
+      return if self.class.ignore?(m)
 
       if public_methods(false).include?(input.command)
         debug "Running command #{input.command} with arguments #{input.args} and wikis #{input.wikis.map(&:base_url)}"
