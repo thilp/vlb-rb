@@ -6,7 +6,7 @@ module VikiLinkBot
         m.reply 'Pour quelles adresses ?'
         return
       end
-      input.args.each do |ip|
+      input.args.uniq.each do |ip|
         unless ip =~ /^ \d{1,3} (?: \. \d{1,3} ){3} $/x
           m.reply "Désolé, #{ip} n'est pas une adresse IPv4."
           next

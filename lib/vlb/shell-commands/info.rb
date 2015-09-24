@@ -20,7 +20,7 @@ module VikiLinkBot
           jobs: %w(statistics jobs),
       }
 
-      input.args.each do |query|
+      input.args.uniq.each do |query|
         query = query.downcase.split('/').map(&:strip)
         prop = query.first.to_sym
 
@@ -29,7 +29,7 @@ module VikiLinkBot
           query.unshift(*@aliases[prop])
         end
 
-        input.wikis.each do |wiki|
+        input.wikis.uniq.each do |wiki|
           prefix = {
               good: "#{query.join('/')} (#{wiki.domain}) = ",
               bad: Format(:red, "#{query.join('/')} (#{wiki.domain}) : ")

@@ -28,7 +28,7 @@ module VikiLinkBot
         end
       end
 
-      targets.each do |target|
+      targets.uniq.each do |target|
         wiki = WikiFactory.instance.get('fr.vikidia.org')
         title = "#{kinds[kind]}/#{target}"
         begin
