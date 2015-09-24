@@ -86,7 +86,7 @@ module VikiLinkBot
     end
 
     def self.ignore?(m)
-      m.user.host.include?('78.225.229.37') || m.user.authname == 'Lucas0231'
+      %w<78.225.229.37 Lucas0231>.map { |x| m.user.host.include?(x) }
     end
 
     def read_eval(m, super_tokens=nil)
