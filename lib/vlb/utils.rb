@@ -1,7 +1,7 @@
 require 'abbrev'
 require 'damerau-levenshtein'
 
-module VikiLinkBot
+module Kernel
   def intercept(default, &block)
     begin
       yield(block)
@@ -9,7 +9,9 @@ module VikiLinkBot
       default
     end
   end
+end
 
+module VikiLinkBot
   module Utils
 
     class VLBError < RuntimeError
