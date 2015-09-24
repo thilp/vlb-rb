@@ -4,6 +4,7 @@ require 'httpclient'
 require 'jsonclient'
 require 'addressable/uri'
 require 'addressable/template'
+require 'vlb/utils'
 
 class WikiFactory
 
@@ -129,8 +130,8 @@ class Wiki
   end
 
   def page_states(*pages)
-    answer = api action: 'query', prop: 'info', indexpageids: 1, titles: pages.join('|')
-    if answer['query'].nil? || answer['query']['pageids'].nil?
+    answer = intercept(nil) { api action: 'query', prop: 'info', indexpageids: 1, titles: pages.join('|') }
+    if answer.nil? || answer['query'].nil? || answer['query']['pageids'].nil?
       Hash[pages.map { |p| [p, 502] }]  # 502 Bad Gateway
     else
       states = {}

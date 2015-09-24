@@ -2,6 +2,14 @@ require 'abbrev'
 require 'damerau-levenshtein'
 
 module VikiLinkBot
+  def intercept(default, &block)
+    begin
+      yield(block)
+    rescue
+      default
+    end
+  end
+
   module Utils
 
     class VLBError < RuntimeError
