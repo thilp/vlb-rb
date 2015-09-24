@@ -83,7 +83,7 @@ module VikiLinkBot
       @httpc = HTTPClient.new
     end
 
-    def self.ignore?(msg)
+    def self.ignore?(m)
       m.user.host.include?('78.225.229.37') || m.user.authname == 'Lucas0231'
     end
 
