@@ -16,26 +16,39 @@ module VikiLinkBot
       m.reply wikilinks.join(' · ')
     end
 
-    def self.wikilinks_in(str)
-      wikis = WikiFactory.instance
-      find_wikilinks(str, %w<[[ ]]>, wikis) + find_wikilinks(str, %w<(( ))>, wikis)
+    class BracePair
+      attr_reader :opening, :closing
+
+      # @param [String] opening
+      # @param [String] closing
+      def initialize(opening, closing)
+        @opening, @closing = [opening, closing].map { |x| x.chars.map { |c| Regexp.quote(c) } }
+      end
+
+      def matcher
+        content = %r{
+        (?: (?! #{closing.join}
+                (?! #{closing.first} )
+              | \| )
+            . )
+      }x
+
+        %r{
+        #{opening.join}
+        ( #{content}+ )
+        (?: \| #{content}* )?
+        #{closing.join}
+        }x
+      end
     end
 
-    def self.find_wikilinks(str, braces, wikis)
+    REGEX = Regexp.new( [%w<[[ ]]>, %w<(( ))>].map { |braces| BracePair.new(*braces).matcher }.join('|') )
+
+    def self.wikilinks_in(str)
+      wikis = WikiFactory.instance
       links = {}
-      b = {a: :first, z: :last}.map { |k, v| [k, braces.send(v).chars.map { |c| Regexp.quote(c) }] }.to_h
-      ctnt = %r%
-        (?: (?! #{b[:z].join} (?! #{b[:z].first} ) |
-                \| )
-            . )
-      %x
-      str.scan %r%
-               #{b[:a].join}
-               ( #{ctnt}+ )
-               (?: \| #{ctnt}* )?
-               #{b[:z].join}
-               %x do |pagename, _|
-        pagename.strip!
+      str.scan(REGEX) do |captures|
+        pagename = captures.compact.first.strip
 
         # A ":" prefix means that we don't want to check whether the page exists.
         check = true
