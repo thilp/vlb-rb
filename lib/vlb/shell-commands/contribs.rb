@@ -6,8 +6,8 @@ module VikiLinkBot
         m.reply 'Donnez-moi au moins un pseudonyme ou une IP !'
         return
       end
-      input.args.each do |username|
-        input.wikis.each do |wiki|
+      input.args.uniq.each do |username|
+        input.wikis.uniq.each do |wiki|
           if username =~ / \d{1,3} (?: \.\d{1,3} ){3} /x # IPv4
             editcount = '?'
           else

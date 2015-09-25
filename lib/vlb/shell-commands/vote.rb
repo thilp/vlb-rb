@@ -22,7 +22,7 @@ module VikiLinkBot
           kind = guesses.first.to_sym
         else
           m.reply(guesses.empty? ?
-              "Désolé, je ne connais pas #{kind} mais #{kinds.keys.join(', ')}." :
+              "Désolé, je ne connais pas #{kind} mais #{kinds.keys.join(', ')} et leurs abbréviations." :
               "Je ne connais pas #{kind}, vouliez-vous plutôt dire #{Utils.join_multiple(guesses)} ?")
           return
         end
@@ -46,9 +46,9 @@ module VikiLinkBot
               section = nil
             when /\A(?>=+\s*)(?:\{\{)?(pour|contre|neutre)/
               section = $1
-            when /\A(?>#\s*)\{\{(pour|contre|neutre)?\b/
+            when /\A(?>[#*]\s*)\{\{(pour|contre|neutre)?\b/
               votes[$1 || section] += 1 if section 
-            when /\A(?>#\s*)\w/
+            when /\A(?>[#*]\s*)\w/
               votes[section] += 1 if section
           end
         end

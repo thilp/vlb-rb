@@ -7,7 +7,7 @@ require 'optparse'
 require 'vlb/shell-core/shell'
 require 'vlb/wikilink_resolver'
 require 'vlb/watcher'
-require 'vlb/site_status_checker'
+require 'vlb/status-checker'
 
 options = {}
 
