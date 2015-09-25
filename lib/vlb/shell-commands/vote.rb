@@ -35,7 +35,7 @@ module VikiLinkBot
         begin
         content = wiki.api action: 'query', prop: 'revisions', titles: title, indexpageids: 1, rvlimit: 1, rvprop: 'content'
         rescue
-          m.reply "Impossible de contacter #{wiki.domain} : #{$!}"
+          m.reply "Apperament, #{wiki.domain} : #{$!} ne répond pas"
           next
         end
         begin
