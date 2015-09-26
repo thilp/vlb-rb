@@ -5,7 +5,7 @@ $: << LIBPATH
 require 'cinch'
 require 'optparse'
 require 'vlb/shell-core/shell'
-require 'vlb/wikilink_resolver'
+require 'vlb/wikilink-resolver'
 require 'vlb/watcher'
 require 'vlb/status-checker'
 
