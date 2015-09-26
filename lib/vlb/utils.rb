@@ -1,6 +1,16 @@
 require 'abbrev'
 require 'damerau-levenshtein'
 
+module Kernel
+  def intercept(default, &block)
+    begin
+      yield(block)
+    rescue
+      default
+    end
+  end
+end
+
 module VikiLinkBot
   module Utils
 

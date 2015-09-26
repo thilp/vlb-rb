@@ -28,10 +28,15 @@ module VikiLinkBot
         end
       end
 
-      targets.each do |target|
+      targets.uniq.each do |target|
         wiki = WikiFactory.instance.get('fr.vikidia.org')
         title = "#{kinds[kind]}/#{target}"
+        begin
         content = wiki.api action: 'query', prop: 'revisions', titles: title, indexpageids: 1, rvlimit: 1, rvprop: 'content'
+        rescue
+          m.reply "Impossible de contacter #{wiki.domain} : #{$!}"
+          next
+        end
         begin
           content = content['query']['pages'][content['query']['pageids'][0]]['revisions'][0]['*']
         rescue NoMethodError

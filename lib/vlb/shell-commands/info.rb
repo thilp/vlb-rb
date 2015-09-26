@@ -1,3 +1,5 @@
+require 'vlb/utils'
+
 module VikiLinkBot
   class Shell
 
@@ -18,7 +20,7 @@ module VikiLinkBot
           jobs: %w(statistics jobs),
       }
 
-      input.args.each do |query|
+      input.args.uniq.each do |query|
         query = query.downcase.split('/').map(&:strip)
         prop = query.first.to_sym
 
@@ -27,13 +29,15 @@ module VikiLinkBot
           query.unshift(*@aliases[prop])
         end
 
-        input.wikis.each do |wiki|
+        input.wikis.uniq.each do |wiki|
           prefix = {
               good: "#{query.join('/')} (#{wiki.domain}) = ",
               bad: Format(:red, "#{query.join('/')} (#{wiki.domain}) : ")
           }
-          answer = wiki.api action: 'query', meta: 'siteinfo', siprop: query.first
-          if answer['query'].nil?
+          answer = intercept(nil) { wiki.api action: 'query', meta: 'siteinfo', siprop: query.first }
+          if answer.nil?
+            m.reply "#{prefix[:bad]}impossible de contacter #{wiki.domain}"
+          elsif answer['query'].nil?
             case answer['warnings']['siteinfo']['*']
               when "The ``siteinfo'' module has been disabled."
                 m.reply "#{prefix[:bad]}informations non publiques, essayez plutôt #{wiki.article_url('Special:Version')}"

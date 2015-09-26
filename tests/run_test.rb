@@ -7,6 +7,7 @@ $: << File.expand_path(__dir__ + '/../lib/')
     vlisp/translator
     vlisp
     shell-core
+    wikilink-resolver
 ).each do |name|
   load File.dirname(__FILE__) + "/vlb/#{name}_test.rb"
 end

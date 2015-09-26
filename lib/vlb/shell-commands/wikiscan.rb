@@ -2,7 +2,7 @@ module VikiLinkBot
   class Shell
 
     def wikiscan(m, input)
-      input.args.each do |username|
+      input.args.uniq.each do |username|
         if username.empty?
           m.reply 'Pour quel utilisateur ?'
           return

@@ -19,6 +19,7 @@ module VikiLinkBot::Shell
     def initialize(*_)
       super
       @httpc = HTTPClient.new
+      @jsonc = JSONClient.new
     end
 
     def read_eval(m, super_tokens=nil)
@@ -42,7 +43,7 @@ module VikiLinkBot::Shell
     end
 
     def version(m, tokens)
-      m.reply 'VikiLinkBot::Shell 2.4.1 — « Songe à la douceur »'
+      m.reply 'VikiLinkBot::Shell 2.5.0'
     end
 
   end

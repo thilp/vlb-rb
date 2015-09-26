@@ -4,6 +4,7 @@ require 'httpclient'
 require 'jsonclient'
 require 'addressable/uri'
 require 'addressable/template'
+require 'vlb/utils'
 
 class WikiFactory
 
@@ -27,6 +28,11 @@ class WikiFactory
   private :initialize
 
   def get(domain=nil)
+    domain = self.class.expand_domain(domain)
+    @wikis[domain] ||= new_from_domain(domain)
+  end
+
+  def self.expand_domain(domain)
     domain = domain ? domain.chomp : ''
     unless domain.include? '.'
       domain = case domain
@@ -44,7 +50,7 @@ class WikiFactory
                    "#{domain}.vikidia.org"
                end
     end
-    @wikis[domain] ||= new_from_domain(domain)
+    domain
   end
 
   def new_from_domain(domain)
@@ -124,8 +130,8 @@ class Wiki
   end
 
   def page_states(*pages)
-    answer = api action: 'query', prop: 'info', indexpageids: 1, titles: pages.join('|')
-    if answer['query'].nil? || answer['query']['pageids'].nil?
+    answer = intercept(nil) { api action: 'query', prop: 'info', indexpageids: 1, titles: pages.join('|') }
+    if answer.nil? || answer['query'].nil? || answer['query']['pageids'].nil?
       Hash[pages.map { |p| [p, 502] }]  # 502 Bad Gateway
     else
       states = {}
