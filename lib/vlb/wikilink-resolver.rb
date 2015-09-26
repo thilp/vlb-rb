@@ -27,17 +27,17 @@ module VikiLinkBot
 
       def matcher
         content = %r{
-        (?: (?! #{closing.join}
-                (?! #{closing.first} )
-              | \| )
-            . )
-      }x
+          (?: (?! #{closing.join}
+                  (?! #{closing.first} )
+                | \| )
+              . )
+        }x
 
         %r{
-        #{opening.join}
-        ( #{content}+ )
-        (?: \| #{content}* )?
-        #{closing.join}
+          #{opening.join}
+          ( #{content}+ )
+          (?: \| #{content}* )?
+          #{closing.join}
         }x
       end
     end
