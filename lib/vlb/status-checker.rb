@@ -42,9 +42,12 @@ module VikiLinkBot
     # @return [String, nil]
     def self.format_errors(statuses)
       return if statuses.nil?
-      msg = statuses.reject { |_, status| status.nil? }.
-                     map { |host, status| "#{host}: " + Cinch::Formatting.format(:red, status) }.
-                     join(' | ')
+      merged = Hash.new { |h, k| h[k] = [] }
+      statuses.each do |host, status|
+        merged[status] << host unless status.nil?
+      end
+      msg = merged.map { |status, hosts| "#{hosts.join(', ')}: " + Cinch::Formatting.format(:red, status) }.
+                   join(' | ')
       '[VSC] ' + (msg.empty? ? Cinch::Formatting.format(:green, '✓') : msg)
     end
 
