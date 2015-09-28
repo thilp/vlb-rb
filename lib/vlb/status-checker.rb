@@ -9,7 +9,8 @@ module VikiLinkBot
     include Cinch::Plugin
 
     # FIXME: add global config
-    @monitored_sites = %w( fr es it en ca eu ru scn ).map { |s| Addressable::URI.parse("https://#{s}.vikidia.org") }
+    @monitored_sites = %w( fr es it en ca eu scn www download ).map { |s| "https://#{s}.vikidia.org" }
+    @monitored_sites.map! { |x| Addressable::URI.parse(x) }
     @httpc = HTTPClient.new
     @httpc.receive_timeout = 5  # if the site does not respond in under this delay, it likely has a problem
     # @httpc.redirect_uri_callback = ->(_, res) { res.header['location'][0] }  # FIXME: fix Vikidia's redirects
