@@ -85,16 +85,10 @@ module VikiLinkBot
       @jsonc = JSONClient.new
     end
 
-    def self.ignore?(m)
-      %w<78.225.229.37 Lucas0231>.any? { |x| m.user.host.include?(x) }
-    end
-
     def read_eval(m, super_tokens=nil)
       input = super_tokens || Input.new(m.message)
 
       return if input.empty?
-
-      return if self.class.ignore?(m)
 
       if public_methods(false).include?(input.command)
         debug "Running command #{input.command} with arguments #{input.args} and wikis #{input.wikis.map(&:base_url)}"
