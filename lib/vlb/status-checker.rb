@@ -81,7 +81,9 @@ module VikiLinkBot
               raise SocketError.new("trop de redirections (#{redirects})") if redirects > @max_redirects
               r = @httpc.head(r.headers['Location'])  # retry
             end
-            [:check_http_status, :check_tls_cert].each { |f| send(f, r) }
+            unless @reference_hosts.include?(uri)
+              [:check_http_status, :check_tls_cert].each { |f| send(f, r) }
+            end
             nil
           rescue HTTPClient::ReceiveTimeoutError
             "délai d'attente écoulé (#{@httpc.receive_timeout} s)"
