@@ -17,6 +17,7 @@ OptionParser.new do |opts|
   opts.on('-c CHAN', 'IRC channel') { |chan| (options[:chans] ||= []) << chan }
   opts.on('-n NICK', 'nickname') { |nick| options[:nick] = nick }
   opts.on('-p PWD', 'password') { |pwd| options[:pwd] = pwd }
+  opts.on('--port PORT', 'server port') { |pwd| options[:port] = port }
   opts.on('--tls', 'use TLS?') { options[:tls] = true }
 end.parse!
 
@@ -40,6 +41,7 @@ bot = Cinch::Bot.new do
     c.realname = 'vlb-rb'
     c.password = options[:pwd] if options[:pwd]
     c.server = options[:server]
+    c.port = options[:port].to_i || 6667
     if options[:tls]
       c.ssl.use = true
       c.ssl.verify = true
