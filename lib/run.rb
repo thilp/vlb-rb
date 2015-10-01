@@ -3,7 +3,6 @@ MISCPATH = File.expand_path(__dir__ + '/../misc/')
 $: << LIBPATH
 
 require 'cinch'
-require 'cinch/plugins/identify'
 require 'optparse'
 require 'vlb/shell-core'
 require 'vlb/wikilink_resolver'
@@ -42,14 +41,8 @@ bot = Cinch::Bot.new do
     c.server = options[:server]
     c.channels = options[:chans] + VikiLinkBot::Watcher.trusted_sources.keys
     c.plugins.plugins = [
-      Cinch::Plugins::Identify,
       VikiLinkBot::Shell, VikiLinkBot::WikiLinkResolver,
       VikiLinkBot::Watcher, VikiLinkBot::StatusChecker]
-    c.plugins.options[Cinch::Plugins::Identify] = {
-      username: c.nick,
-      password: c.password,
-      type: :nickserv
-    }
   end
 end
 
