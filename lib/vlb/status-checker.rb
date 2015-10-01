@@ -12,7 +12,7 @@ module VikiLinkBot
     @reference_hosts = %w( en.wikipedia.org www.google.com )
     @monitored_hosts = %w( fr es it en ca eu scn www download ).map { |s| "#{s}.vikidia.org" }
     @httpc = HTTPClient.new
-    @httpc.receive_timeout = 5  # if the site does not respond in under this delay, it likely has a problem
+    @httpc.receive_timeout = 10  # if the site does not respond in under this delay, it likely has a problem
     # @httpc.redirect_uri_callback = ->(_, res) { res.header['location'][0] }  # FIXME: fix Vikidia's redirects
     @max_redirects = 5
     @expected_cert = OpenSSL::X509::Certificate.new(File.read(::MISCPATH + '/vikidia.pem'))
