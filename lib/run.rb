@@ -17,7 +17,7 @@ OptionParser.new do |opts|
   opts.on('-c CHAN', 'IRC channel') { |chan| (options[:chans] ||= []) << chan }
   opts.on('-n NICK', 'nickname') { |nick| options[:nick] = nick }
   opts.on('-p PWD', 'password') { |pwd| options[:pwd] = pwd }
-  opts.on('--port PORT', 'server port') { |pwd| options[:port] = port }
+  opts.on('--port PORT', 'server port') { |port| options[:port] = port }
   opts.on('--tls', 'use TLS?') { options[:tls] = true }
 end.parse!
 
