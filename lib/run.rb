@@ -53,19 +53,19 @@ bot = Cinch::Bot.new do
   end
 end
 
-PLUGIN_SHELL = bot.plugins.find { |e| e.is_a?(VikiLinkBot::Shell) }
-if PLUGIN_SHELL
-  {
-      'VD:DA / VD:DB' => 'title:/^Vikidia:Demandes aux (admin|bureaucrates)/ (NOT log_type:patrol)',
-      'Blanchiment' => '(< length/new 20) (> (/ length/old length/new) 3.0)'
-  }.each do |wname, wconstraints|
-    bot.loggers.info "Registering !watch #{wname}: #{wconstraints}"
-    PLUGIN_SHELL.watch_register(
-        wname, '#vikidia-rc-json', Channel('#vikidia'),
-        VikiLinkBot::Input.split(wconstraints),
-        '[[' + Cinch::Formatting.format(:blue, '${title}') + ']] par ' +
-            Cinch::Formatting.format(:green, '${user}') + ' : « ${comment} »')
-  end
-end
+# PLUGIN_SHELL = bot.plugins.find { |e| e.is_a?(VikiLinkBot::Shell) }
+# if PLUGIN_SHELL
+#   {
+#       'VD:DA / VD:DB' => 'title:/^Vikidia:Demandes aux (admin|bureaucrates)/ (NOT log_type:patrol)',
+#       'Blanchiment' => '(< length/new 20) (> (/ length/old length/new) 3.0)'
+#   }.each do |wname, wconstraints|
+#     bot.loggers.info "Registering !watch #{wname}: #{wconstraints}"
+#     PLUGIN_SHELL.watch_register(
+#         wname, '#vikidia-rc-json', Channel('#vikidia'),
+#         VikiLinkBot::Input.split(wconstraints),
+#         '[[' + Cinch::Formatting.format(:blue, '${title}') + ']] par ' +
+#             Cinch::Formatting.format(:green, '${user}') + ' : « ${comment} »')
+#   end
+# end
 
 bot.start
