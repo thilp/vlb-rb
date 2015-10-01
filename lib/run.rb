@@ -17,6 +17,7 @@ OptionParser.new do |opts|
   opts.on('-c CHAN', 'IRC channel') { |chan| (options[:chans] ||= []) << chan }
   opts.on('-n NICK', 'nickname') { |nick| options[:nick] = nick }
   opts.on('-p PWD', 'password') { |pwd| options[:pwd] = pwd }
+  opts.on('--tls', 'use TLS?') { options[:tls] = true }
 end.parse!
 
 if [:server, :chans, :nick].any? { |o| !options[o]}
@@ -39,6 +40,10 @@ bot = Cinch::Bot.new do
     c.realname = 'vlb-rb'
     c.password = options[:pwd] if options[:pwd]
     c.server = options[:server]
+    if options[:tls]
+      c.ssl.use = true
+      c.ssl.verify = true
+    end
     c.channels = options[:chans] + VikiLinkBot::Watcher.trusted_sources.keys
     c.plugins.plugins = [
       VikiLinkBot::Shell, VikiLinkBot::WikiLinkResolver,
