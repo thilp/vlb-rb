@@ -8,6 +8,7 @@ module VikiLinkBot
       @filename = filename
       @stored = filename.nil? ? {} : YAML.load(File.read(filename)) || {}
       @name_sep = name_separator
+      @write_lock = Mutex.new
     end
 
     def get(query, fallback=nil)
@@ -19,14 +20,21 @@ module VikiLinkBot
     end
 
     def set(query, value, create=true)
-      VikiLinkBot::VLINQ.update(query, value, @stored, create: create, separator: @name_sep)
+      @write_lock.synchronize do
+        VikiLinkBot::VLINQ.update(
+          query, value, @stored,
+          create: create,
+          separator: @name_sep)
+      end
     end
 
     def write(filename=@filename)
       return if filename.nil?
-      f = File.open(filename, 'w')
-      f.puts(YAML.dump(@stored))
-      f.close
+      @write_lock.synchronize do
+        f = File.open(filename, 'w')
+        f.puts(YAML.dump(@stored))
+        f.close
+      end
     end
 
   end
