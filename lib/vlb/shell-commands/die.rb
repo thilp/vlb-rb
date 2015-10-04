@@ -1,12 +1,9 @@
-require 'vlb/trust_authority'
+require 'vlb/shell-core/command'
 
-module VikiLinkBot
-  class Shell
+module VikiLinkBot::Shell
 
-    def die(m, _)
-      return if VikiLinkBot::TrustAuthority.reject?(m, :op?)
-      bot.quit('Received !die. Bye!')
-    end
-
+  COMMANDS[:die] = Command.new do |_, _|
+    bot.quit('Received !die. Bye!')
   end
+
 end
