@@ -8,6 +8,8 @@ module VikiLinkBot::Shell
       # How many times (at most) {dispatched_body} may be run in {body}.
       MAX_DISPATCHES = 5
 
+      private
+
       # Runs {dispatched_body} once for each specified wiki, with the full argument list.
       #
       # For instance, if the "abc" command was defined using WikiAggregator, a call to:
@@ -25,11 +27,16 @@ module VikiLinkBot::Shell
       # @param [Cinch::Message] m
       # @param [VikiLinkBot::Shell::Input] input
       def body(m, input)
+        super
         wikis = input.wikis.uniq
         wikis.take(MAX_DISPATCHES).each do |wiki|
           dispatched_body(m, wiki, input.args)
         end
         m.reply("(désolé, limite de #{MAX_DISPATCHES} combinaisons atteinte)") if wikis.size >= MAX_DISPATCHES
+      end
+
+      def body_name
+        :dispatched_body
       end
 
       # The command's logic for the specified `wiki` and `arg`.
@@ -41,7 +48,6 @@ module VikiLinkBot::Shell
       def dispatched_body(m, wiki, args)
         raise NotImplementedError.new
       end
-      private :dispatched_body
     end
   end
 end

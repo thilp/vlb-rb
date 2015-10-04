@@ -8,6 +8,8 @@ module VikiLinkBot::Shell
       # How many times (at most) {dispatched_body} may be run in {body}.
       MAX_DISPATCHES = 5
 
+      private
+
       # Runs {dispatched_body} for each provided combination of arguments and wikis.
       #
       # For instance, if the "abc" command was defined using CartesianProduct, a call to:
@@ -29,6 +31,7 @@ module VikiLinkBot::Shell
       # @param [Cinch::Message] m
       # @param [VikiLinkBot::Shell::Input] input
       def body(m, input)
+        super
         dispatches = 0
         input.args.uniq.each do |wiki|
           input.wikis.uniq.each do |arg|
@@ -42,6 +45,10 @@ module VikiLinkBot::Shell
         end
       end
 
+      def body_name
+        :dispatched_body
+      end
+
       # The command's logic for the specified `wiki` and `arg`.
       # Since it may be called multiple times in a row, it should not issue more than a one-line message.
       #
@@ -51,7 +58,6 @@ module VikiLinkBot::Shell
       def dispatched_body(m, wiki, arg)
         raise NotImplementedError.new
       end
-      private :dispatched_body
     end
   end
 end
