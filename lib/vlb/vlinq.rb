@@ -41,7 +41,7 @@ module VikiLinkBot
         @type = type
       end
       def message
-        "don't know how to query a container of type #{@type}"
+        "#{@type} : conteneur inconnu"
       end
     end
     class NotAnIndexError < VLINQError
@@ -50,7 +50,7 @@ module VikiLinkBot
         @access = access
       end
       def message
-        "invalid index #{@access.inspect} for array access"
+        "#{@access.inspect} : type d'index invalide (#{@access.class})"
       end
     end
     class OutOfBoundsError < VLINQError
@@ -60,16 +60,19 @@ module VikiLinkBot
         @size = size
       end
       def message
-        "invalid index #{@access} in queried array of size #{@size}"
+        "index #{@access} invalide dans un tableau de #{@size} éléments"
       end
     end
     class UnknownKeyError < VLINQError
       attr_reader :key
-      def initialize(key)
+      def initialize(key, alternatives=[])
         @key = key
+        @alternatives = alternatives
       end
       def message
-        "unknown key #{@key.inspect} in queried hash"
+        "clef #{@key.inspect} inconnue" +
+            (@alternatives.none? ? '' :
+                ' ; alternatives : ' + VikiLinkBot::Utils.join_multiple(@alternatives))
       end
     end
 
@@ -79,15 +82,21 @@ module VikiLinkBot
     #
     # @param [String] query a sequence of tokens (separated by separator) describing how to access the targeted value
     # @param [Object] source the (possibly nested) container in which to search for the targeted value
-    # @option options [TrueClass,FalseClass] create (false) whether to create a queried but non-existent path
-    # @option options [String] separator ('/') what stands between each query part
-    def self.select(query, source, options={})
-      options = {create: false, separator: '/'}.merge(options)
-      key, ks = query.split(options[:separator], 2)
+    # @param [TrueClass,FalseClass] create whether to create a queried but non-existent path
+    # @param [String] separator what stands between each query part
+    # @param [TrueClass,FalseClass] alternative_keys whether to include an alternative key list in the exception for
+    #   an unknown key
+    #
+    # @raise [OutOfBoundsError] when trying to access an offset greater than the array's size
+    # @raise [NotAnIndexError] when trying to access an offset with something else than an integer
+    # @raise [UnknownKeyError] when trying to access an unknown field in a hash
+    # @raise [UnsupportedContainerError] when querying an unknown container type
+    def self.select(query, source, create: false, separator: '/', alternative_keys: false)
+      key, ks = query.split(separator, 2)
       case source
         when Array
           if key.integer?
-            if options[:create] || source.index_valid?(key.to_i)
+            if create || source.index_valid?(key.to_i)
               ks.nil? ? source[key.to_i] : select(ks, source[key.to_i], options)
             else
               raise OutOfBoundsError.new(key.to_i, source.size)
@@ -97,10 +106,10 @@ module VikiLinkBot
           end
         when Hash
           key = key.to_sym if !source.key?(key) && source.key?(key.to_sym)
-          if options[:create] || source.key?(key)
+          if create || source.key?(key)
             ks.nil? ? source[key] : select(ks, source[key], options)
           else
-            raise UnknownKeyError.new(key)
+            raise UnknownKeyError.new(key, alternative_keys ? source.keys : [])
           end
         when Enumerable
           select(query, source.to_a, options) # fallback to the array case
@@ -114,14 +123,15 @@ module VikiLinkBot
     # @param [String] query
     # @param [Object] value
     # @param [Object] source
-    def self.update(query, value, source, options={})
-      options = {create: false, separator: '/'}.merge(options)
-      key, ks = query.split(options[:separator], 2)
+    # @param [TrueClass,FalseClass] create
+    # @param [String] separator
+    def self.update(query, value, source, create: false, separator: '/')
+      key, ks = query.split(separator, 2)
       case source
         when Array
           if key.integer?
             if ks.nil?
-              if options[:create] || source.index_valid?(key.to_i)
+              if create || source.index_valid?(key.to_i)
                 source[key.to_i] = value
               else
                 raise OutOfBoundsError.new(key.to_i, source.size)
@@ -134,12 +144,12 @@ module VikiLinkBot
           end
         when Hash
           key = key.to_sym if !source.key?(key) && source.key?(key.to_sym)
-          if source.key?(key) || options[:create]
+          if source.key?(key) || create
             if ks.nil?
               source[key] = value
             else
               unless source.key?(key)
-                next_key = ks.split(options[:separator], 2).first
+                next_key = ks.split(separator, 2).first
                 source[key] = next_key.integer? ? [] : {}
               end
               update(ks, value, source[key], options)
