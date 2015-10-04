@@ -36,14 +36,17 @@ module VikiLinkBot::Shell
       end
     end
 
+    # @return [Symbol]
     def command
       @command ||= @tokens.first[1..-1].to_sym
     end
 
+    # @return [Enumerable<String>]
     def args
       @args ||= @tokens.drop(1).reject { |e| e.empty? || e.start_with?('@') }
     end
 
+    # @return [Enumerable<Wiki>]
     def wikis
       @wikis ||= begin
         wf = WikiFactory.instance
@@ -53,6 +56,7 @@ module VikiLinkBot::Shell
       end
     end
 
+    # @return [TrueClass,FalseClass]
     def empty?
       @tokens.empty?
     end
