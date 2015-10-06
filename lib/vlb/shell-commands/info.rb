@@ -37,6 +37,7 @@ module VikiLinkBot
           answer = intercept(nil) { wiki.api action: 'query', meta: 'siteinfo', siprop: query.first }
           if answer.nil?
             m.reply "#{prefix[:bad]}impossible de contacter #{wiki.domain}"
+            next
           elsif answer['query'].nil?
             case answer['warnings']['siteinfo']['*']
               when "The ``siteinfo'' module has been disabled."
