@@ -19,7 +19,7 @@ module VikiLinkBot
                       " - https://www.openstreetmap.org/#map=12/#{h['loc'].tr(',', '/')}"
         rescue  # try our old provider
           begin
-            url = 'https://whatismyipaddress.com/ip/' + ip
+            url = 'http://whatismyipaddress.com/ip/' + ip
             @httpc.get_content(url) do |chunk|
               chunk.scan /<meta name="description" content="([^"]+)"/ do |capture, _|
                 m.reply(capture.gsub!(/^Location:\s+|\s+Learn more\.$/, '') ? "#{capture} - #{url}" : url)
