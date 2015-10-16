@@ -17,6 +17,7 @@ module VikiLinkBot
     @max_redirects = 5
     @expected_cert = OpenSSL::X509::Certificate.new(File.read(::MISCPATH + '/vikidia.pem'))
     @last_statuses = nil
+    @acknowledged_errors = {}
 
     def initialize(*args)
       super
@@ -35,6 +36,14 @@ module VikiLinkBot
           chan.send(msg)
         end
       end
+    end
+
+    # @param [String] host
+    # @return [TrueClass,FalseClass] whether the acknowledgement was valid and thus recorded
+    def self.ack_last_error(host)
+      return false unless @last_statuses.keys.include?(host)
+      @acknowledged_errors[host] = @last_statuses[host]
+      true
     end
 
     # Returns a string describing the statuses, or nil if the argument was nil.
@@ -58,11 +67,26 @@ module VikiLinkBot
       # We watch reference sites so we can tell when a status is due to vlb's
       # connection. Here we remove reports of problems shared by our reference
       # sites, because these problems are likely to be on vlb's side.
-      ref_statuses = new_statuses.select { |host, status| @reference_hosts.include?(host) }.map { |k,v| v }.uniq
+      ref_statuses = new_statuses.select { |host, _| @reference_hosts.include?(host) }.map { |_, v| v }.uniq
       new_statuses.delete_if { |_, status| ref_statuses.include?(status) }
 
       return if new_statuses == @last_statuses
       @last_statuses = new_statuses
+
+      # Ignore acknowledged errors in further processing
+      # (but we remember them anyway, so that we can drop the acknowledgement if an error disappears).
+      # Note: Even if it may seem counter-intuitive, using #delete_if instead of #each allows us to safely delete
+      # what we are iterating on.
+      @acknowledged_errors.delete_if do |host, status|
+        if new_statuses[host] == status
+          new_statuses.delete(host)
+          false
+        else
+          true
+        end
+      end
+
+      new_statuses
     end
 
     # Find potential errors for sites specified in @monitored_hosts.
