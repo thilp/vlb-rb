@@ -15,6 +15,7 @@ module VikiLinkBot
           contestation: "Vikidia:Contestation_du_statut_d'administrateur",
           pdd: 'Vikidia:Prise_de_décision',
           sa: 'Vikidia:Super_article/Élection'
+          pas: 'Vikidia:Pages à supprimer'
       }
       unless kinds.key?(kind)
         guesses = Utils.guess(kind.to_s, kinds.keys)
@@ -34,7 +35,7 @@ module VikiLinkBot
         begin
         content = wiki.api action: 'query', prop: 'revisions', titles: title, indexpageids: 1, rvlimit: 1, rvprop: 'content'
         rescue
-          m.reply "Impossible de contacter #{wiki.domain} : #{$!}"
+          m.reply "Apperament, #{wiki.domain} : #{$!} ne répond pas"
           next
         end
         begin
@@ -58,7 +59,7 @@ module VikiLinkBot
           end
         end
         comment = (votes.values.reduce(0, &:+) == 0) ?
-            "Personne n'a encore voté" :
+            "Personne n'a encore voté, ou bien je ne peux pas reconnaitre les votes." :
             votes.map { |k, v| "#{v} #{k}" }.join(', ') +
                 " (#{(100 * votes['pour'] / votes.values.reduce(0, &:+).to_f).round(2)} % d'accord)"
         m.reply "#{comment} - #{wiki.article_url(title)}"
