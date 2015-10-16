@@ -5,15 +5,17 @@ require 'vlb/utils'
 module VikiLinkBot
   class Shell
     def status(m, input)
+      cls = VikiLinkBot::StatusChecker
       if input.args.first && input.args.first.downcase == 'ack'
         return if VikiLinkBot::TrustAuthority.reject?(m, :op?)
         res = VikiLinkBot::Utils.join_multiple(
-            input.args.drop(1).select { |host| VikiLinkBot::StatusChecker.ack_last_error(host) },
+            input.args.drop(1).select { |host| cls.ack_last_error(host) },
             ', ', ' et ')
         m.reply("J'ignorerai la dernière erreur rapportée pour #{res} jusqu'à ce qu'elle disparaisse.")
       else
-        statuses = VikiLinkBot::StatusChecker.filter_errors(VikiLinkBot::StatusChecker.find_errors)
-        m.reply(VikiLinkBot::StatusChecker.format_errors(statuses || {}))
+        statuses = cls.filter_errors(cls.find_errors)
+        cls.last_statuses = statuses
+        m.reply(cls.format_errors(statuses || {}))
       end
     end
   end

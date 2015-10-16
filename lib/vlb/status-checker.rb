@@ -19,6 +19,10 @@ module VikiLinkBot
     @last_statuses = nil
     @acknowledged_errors = {}
 
+    class << self
+      attr_accessor :last_statuses
+    end
+
     def initialize(*args)
       super
       @in_progress = Mutex.new  # locked when a thread is performing checks; other threads then simply give up
@@ -29,9 +33,12 @@ module VikiLinkBot
 
     # Check @monitored_hosts' statuses and alert all channels the bot is in if necessary.
     def notify_all
+      cls = self.class
       @in_progress.try_synchronize do
-        msg = self.class.format_errors(self.class.filter_errors(self.class.find_errors))
-        return if msg.nil?
+        errors = cls.filter_errors(cls.find_errors)
+        return if errors == cls.last_statuses
+        cls.last_statuses = errors
+        msg = cls.format_errors(errors)
         bot.channels.each do |chan|
           chan.send(msg)
         end
@@ -50,7 +57,6 @@ module VikiLinkBot
     # @param [Hash, nil] statuses from find_errors
     # @return [String, nil]
     def self.format_errors(statuses)
-      return if statuses.nil?
       merged = Hash.new { |h, k| h[k] = [] }
       statuses.each do |host, status|
         merged[status] << host unless status.nil?
@@ -69,9 +75,6 @@ module VikiLinkBot
       # sites, because these problems are likely to be on vlb's side.
       ref_statuses = new_statuses.select { |host, _| @reference_hosts.include?(host) }.map { |_, v| v }.uniq
       new_statuses.delete_if { |_, status| ref_statuses.include?(status) }
-
-      return if new_statuses == @last_statuses
-      @last_statuses = new_statuses
 
       # Ignore acknowledged errors in further processing
       # (but we remember them anyway, so that we can drop the acknowledgement if an error disappears).
