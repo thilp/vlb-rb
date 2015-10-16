@@ -5,7 +5,7 @@ require 'vlb/utils'
 module VikiLinkBot
   class Shell
     def status(m, input)
-      if input.args.first.downcase == 'ack'
+      if input.args.first && input.args.first.downcase == 'ack'
         return if VikiLinkBot::TrustAuthority.reject?(m, :op?)
         res = VikiLinkBot::Utils.join_multiple(
             input.args.drop(1).select { |host| VikiLinkBot::StatusChecker.ack_last_error(host) },
