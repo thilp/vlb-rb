@@ -13,7 +13,7 @@ module VikiLinkBot
         m.reply("J'ignorerai la dernière erreur rapportée pour #{res} jusqu'à ce qu'elle disparaisse.")
       else
         statuses = VikiLinkBot::StatusChecker.filter_errors(VikiLinkBot::StatusChecker.find_errors)
-        m.reply(VikiLinkBot::StatusChecker.format_errors(statuses))
+        m.reply(VikiLinkBot::StatusChecker.format_errors(statuses || {}))
       end
     end
   end
