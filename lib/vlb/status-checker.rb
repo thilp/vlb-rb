@@ -40,6 +40,18 @@ module VikiLinkBot
       end
     end
 
+    def keys
+      @errors.keys
+    end
+
+    def values
+      @errors.values
+    end
+
+    def [](key)
+      @errors[key]
+    end
+
     def []=(key, value)
       @errors[key] = value
     end
@@ -91,7 +103,7 @@ module VikiLinkBot
     # @param [String] host
     # @return [TrueClass,FalseClass] whether the acknowledgement was valid and thus recorded
     def self.ack_last_error(host)
-      return false unless @last_statuses.errors.keys.include?(host)
+      return false unless @last_statuses.keys.include?(host)
       @acknowledged_errors[host] = @last_statuses[host]
       true
     end
