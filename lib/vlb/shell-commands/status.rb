@@ -13,9 +13,9 @@ module VikiLinkBot
             ', ', ' et ')
         m.reply("J'ignorerai la dernière erreur rapportée pour #{res} jusqu'à ce qu'elle disparaisse.")
       else
-        statuses = cls.filter_errors(cls.find_errors)
+        statuses = cls.find_errors
         cls.last_statuses = statuses
-        m.reply(cls.format_errors(statuses || {}))
+        m.reply("État des sites : #{statuses}")
       end
     end
   end
