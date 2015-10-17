@@ -26,7 +26,7 @@ module VikiLinkBot
     end
 
     def filtered
-      filter_own & filter_ack
+      filter_own.select { |k, v| filter_ack[k] == v }  # hash intersection
     end
 
     def filter_ack
