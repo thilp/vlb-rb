@@ -107,7 +107,7 @@ module VikiLinkBot
     # @param [String] host
     # @return [TrueClass,FalseClass] whether the acknowledgement was valid and thus recorded
     def self.ack_last_error(host)
-      return false unless @last_statuses.keys.include?(host)
+      return false unless @last_statuses && @last_statuses.keys.include?(host)
       @acknowledged_errors[host] = @last_statuses[host]
       true
     end
