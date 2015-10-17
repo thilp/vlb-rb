@@ -11,11 +11,11 @@ module VikiLinkBot
         res = VikiLinkBot::Utils.join_multiple(
             input.args.drop(1).select { |host| cls.ack_last_error(host) },
             ', ', ' et ')
-        m.reply("J'ignorerai la dernière erreur rapportée pour #{res} jusqu'à ce qu'elle disparaisse.")
+        m.reply("J'ignorerai désormais la dernière erreur rapportée pour #{res}.")
       else
         statuses = cls.find_errors
         cls.last_statuses = statuses
-        m.reply("État des sites : #{statuses}")
+        m.reply("#{statuses}")
       end
     end
   end

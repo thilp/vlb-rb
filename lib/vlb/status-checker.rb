@@ -22,7 +22,7 @@ module VikiLinkBot
       end
       msg = merged.map { |status, hosts| "#{hosts.join(', ')}: " + Cinch::Formatting.format(:red, status) }.join(' | ')
       return msg unless msg.empty?
-      filter_ack.size == @errors.size ? Cinch::Formatting.format(:green, '✓') : random_yellow_monkey
+      filter_ack.size == @errors.size ? Cinch::Formatting.format(:green, '✓') : random_green_monkey
     end
 
     def filtered
@@ -56,8 +56,8 @@ module VikiLinkBot
       @errors[key] = value
     end
 
-    def random_yellow_monkey
-      Cinch::Formatting.format(:yellow, (0x1F648..0x1F64A).to_a.shuffle.take(1).pack('U'))
+    def random_green_monkey
+      Cinch::Formatting.format(:green, (0x1F648..0x1F64A).to_a.shuffle.take(1).pack('U'))
     end
 
     def ==(other)
