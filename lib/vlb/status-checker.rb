@@ -59,6 +59,10 @@ module VikiLinkBot
     def random_yellow_monkey
       Cinch::Formatting.format(:yellow, (0x1F648..0x1F64A).to_a.shuffle.take(1).pack('U'))
     end
+
+    def ==(other)
+      other.class == self.class && other.errors == self.errors
+    end
   end
 
   class StatusChecker
