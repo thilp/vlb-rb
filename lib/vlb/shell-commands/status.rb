@@ -7,7 +7,8 @@ module VikiLinkBot
     def status(m, input)
       cls = VikiLinkBot::StatusChecker
       if input.args.first
-        if input.args.first.downcase == 'ack'
+        case input.args.first.downcase
+        when 'ack'
           return if VikiLinkBot::TrustAuthority.reject?(m, :op?)
           res = VikiLinkBot::Utils.join_multiple(
               input.args.drop(1).select { |host| cls.ack_last_error(host) },
@@ -17,7 +18,7 @@ module VikiLinkBot
           else
             m.reply("J'ignorerai désormais la dernière erreur rapportée pour #{res}.")
           end
-        elsif input.args.first.downcase == 'unack'
+        when 'unack'
           return if VikiLinkBot::TrustAuthority.reject?(m, :op?)
           res = VikiLinkBot::Utils.join_multiple(
             input.args.drop(1).select { |host| cls.unack(host) }, ', ', ' et ')
@@ -25,6 +26,14 @@ module VikiLinkBot
             m.reply("Désolé, aucun de ces domaines n'était ignoré.")
           else
             m.reply("D'accord, je n'ignore plus les erreurs de #{res}")
+          end
+        when 'acked'
+          res = VikiLinkBot::Utils.join_multiple(
+            cls.acked.map { |k,v| "#{k} (#{v})" }, ', ', ' et ')
+          if res.nil?
+            m.reply("Aucun domaine n'est actuellement ignoré.")
+          else
+            m.reply("Domaines actuellement ignorés : #{res}")
           end
         end
       else
