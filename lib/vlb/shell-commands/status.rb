@@ -12,7 +12,7 @@ module VikiLinkBot
           res = VikiLinkBot::Utils.join_multiple(
               input.args.drop(1).select { |host| cls.ack_last_error(host) },
               ', ', ' et ')
-          if res.empty?
+          if res.nil?
             m.reply("Désolé, aucun de ces domaines n'a encore émis une erreur.")
           else
             m.reply("J'ignorerai désormais la dernière erreur rapportée pour #{res}.")
@@ -21,7 +21,7 @@ module VikiLinkBot
           return if VikiLinkBot::TrustAuthority.reject?(m, :op?)
           res = VikiLinkBot::Utils.join_multiple(
             input.args.drop(1).select { |host| cls.unack(host) }, ', ', ' et ')
-          if res.empty?
+          if res.nil?
             m.reply("Désolé, aucun de ces domaines n'était ignoré.")
           else
             m.reply("D'accord, je n'ignore plus les erreurs de #{res}")
