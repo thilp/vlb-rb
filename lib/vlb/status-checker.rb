@@ -112,6 +112,10 @@ module VikiLinkBot
       true
     end
 
+    def self.unack(host)
+      @acknowledged_errors.delete(host)
+    end
+
     # Find potential errors for sites specified in @monitored_hosts.
     # @return [VikiLinkBot::CheckResult] a URL => exception mapping. The exception part is nil if no errors were found.
     def self.find_errors
