@@ -143,7 +143,7 @@ module VikiLinkBot
           rescue HTTPClient::ReceiveTimeoutError
             "délai d'attente écoulé (#{@httpc.receive_timeout} s)"
           rescue => e
-            e
+            e.to_s.gsub(uri, '<domain>')
           end
           lock.synchronize do
             # force stringification because it will be compared later
