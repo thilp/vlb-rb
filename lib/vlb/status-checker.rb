@@ -79,8 +79,8 @@ module VikiLinkBot
       non_ack = problems.reject { |_, status| status.acknowledged }
       return random_green_monkey if non_ack.empty?
 
-      non_ack.group_by { |_, status| status.to_s }.
-          map { |status, hosts| "#{hosts.join(', ')}: " + Cinch::Formatting.format(:red, status) }.
+      non_ack.values.group_by(&:to_s).
+          map { |msg, errs| "#{errs.map(&:uri).join(', ')}: " + Cinch::Formatting.format(:red, msg) }.
           join(' | ')
     end
 
@@ -167,7 +167,7 @@ module VikiLinkBot
             fail SocketError, "trop de redirections (#{nb_redirects})" if nb_redirects > @max_redirects
             answer = @httpc.head(answer.headers['Location']) # retry
           end
-          [:check_http_status, :check_tls_cert].each { |f| f.call(answer) }
+          [:check_http_status, :check_tls_cert].each { |f| send(f, answer) }
           DomainOK.new(uri)
         rescue HTTPClient::ReceiveTimeoutError
           DomainError.new(uri, @acknowledged_errors[uri], "délai d'attente écoulé (#{@httpc.receive_timeout} s)")
