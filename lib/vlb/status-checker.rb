@@ -43,7 +43,7 @@ module VikiLinkBot
     def initialize(uri, acknowledged, err_msg)
       super(uri)
       @err = err_msg.to_s
-      @acknowledged = (@err == acknowledged)
+      @acknowledged = acknowledged && @err == acknowledged.err
     end
 
     def to_s
@@ -97,7 +97,7 @@ module VikiLinkBot
     end
 
     def ==(other)
-      other.class == self.class && other.statuses == self.statuses
+      other.class == self.class && other.instance_eval { @statuses } == @statuses
     end
   end
 
