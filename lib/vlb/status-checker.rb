@@ -5,55 +5,91 @@ require 'cinch/formatting'
 
 module VikiLinkBot
 
-  class CheckResult
-    attr_reader :errors, :ignore_list
-    def initialize(reference_hosts, ignore_list)
-      @errors = {}
-      @ref_hosts = reference_hosts
-      @ignore_list = ignore_list
+  # Represents the result of a domain check: either success or failure.
+  class DomainValidity
+    attr_reader :uri, :acknowledged
+
+    def initialize(uri)
+      @uri = uri
+      @acknowledged = false
+    end
+
+    def ==(o)
+      self.class == o.class &&
+          self.uri == o.uri &&
+          self.acknowledged == o.acknowledged &&
+          self.to_s == o.to_s
+    end
+
+    alias_method :eql?, :==
+
+    def hash
+      @uri.hash ^ @acknowledged.hash ^ to_s.hash
+    end
+  end
+
+  # For domains that have been reached and that passed all tests.
+  class DomainOK < DomainValidity
+    def to_s
+      'ok'
+    end
+  end
+
+  # For domains that have not been reached even though we were technically able to do so (the problem is on their side)
+  # or that failed at least a test.
+  class DomainError < DomainValidity
+    attr_reader :err
+
+    def initialize(uri, acknowledged, err_msg)
+      super(uri)
+      @err = err_msg.to_s
+      @acknowledged = (@err == acknowledged)
+    end
+
+    def to_s
+      @s ||= @err.gsub(uri, '<domain>')
+    end
+  end
+
+  # For domains that have not been reached because we were technically unable to (the problem is on our side).
+  class UndeterminedResult < DomainValidity
+    def initialize(uri, msg)
+      super(uri)
+      @msg = msg.to_s
+    end
+
+    def to_s
+      @s ||= @msg.gsub(uri, '<domain>')
+    end
+  end
+
+
+  # Maps an URI to its DomainValidity instance, and knows how to display itself, including acknowledged errors.
+  class DomainStatusMap
+    def initialize
+      @statuses = {}
     end
 
     # Returns a string describing the statuses.
     # @return [String]
     def to_s
-      merged = Hash.new { |h, k| h[k] = [] }
-      filtered.each do |host, status|
-        merged[status] << host unless status.nil?
-      end
-      msg = merged.map { |status, hosts| "#{hosts.join(', ')}: " + Cinch::Formatting.format(:red, status) }.join(' | ')
-      return msg unless msg.empty?
-      filter_ack.size == @errors.size ? Cinch::Formatting.format(:green, '✓') : random_green_monkey
-    end
+      problems = @statuses.select { |_, status| status.is_a?(DomainError) }
+      return Cinch::Formatting.format(:green, '✓') if problems.empty?
 
-    def filtered
-      filter_own.select { |k, v| filter_ack[k] == v }  # hash intersection
-    end
+      non_ack = problems.reject { |_, status| status.acknowledged }
+      return random_green_monkey if non_ack.empty?
 
-    def filter_ack
-      @f_ack ||= @errors.select { |k, v| !@ignore_list.key?(k) || @ignore_list[k] != v }
-    end
-
-    def filter_own
-      @f_own ||= begin
-        ref_statuses = @errors.select { |host, _| @ref_hosts.include?(host) }.map { |_, v| v }.uniq
-        @errors.reject { |_, status| ref_statuses.include?(status) }
-      end
-    end
-
-    def keys
-      @errors.keys
-    end
-
-    def values
-      @errors.values
+      non_ack.group_by { |_, status| status.to_s }.
+          map { |status, hosts| "#{hosts.join(', ')}: " + Cinch::Formatting.format(:red, status) }.
+          join(' | ')
     end
 
     def [](key)
-      @errors[key]
+      @statuses[key]
     end
 
     def []=(key, value)
-      @errors[key] = value
+      @statuses[key] = value
     end
 
     def random_green_monkey
@@ -61,7 +97,7 @@ module VikiLinkBot
     end
 
     def ==(other)
-      other.class == self.class && other.errors == self.errors
+      other.class == self.class && other.statuses == self.statuses
     end
   end
 
@@ -69,10 +105,11 @@ module VikiLinkBot
     include Cinch::Plugin
 
     # FIXME: add global config
-    @ref_hosts = %w( en.wikipedia.org www.google.com )
     @monitored_hosts = %w( fr es it en ca eu scn www download ).map { |s| "#{s}.vikidia.org" }
     @httpc = HTTPClient.new
-    @httpc.receive_timeout = 10  # if the site does not respond in under this delay, it likely has a problem
+    @httpc.send_timeout = 1
+    @httpc.connect_timeout = 1
+    @httpc.receive_timeout = 5  # if the site does not respond in under this delay, it likely has a problem
     @max_redirects = 5
     @expected_cert = OpenSSL::X509::Certificate.new(File.read(::MISCPATH + '/vikidia.pem'))
     @last_statuses = nil
@@ -82,7 +119,7 @@ module VikiLinkBot
       attr_accessor :last_statuses
     end
 
-    def initialize(*args)
+    def initialize(*)
       super
       @in_progress = Mutex.new  # locked when a thread is performing checks; other threads then simply give up
     end
@@ -120,55 +157,66 @@ module VikiLinkBot
       @acknowledged_errors.dup
     end
 
-    # Find potential errors for sites specified in @monitored_hosts.
-    # @return [VikiLinkBot::CheckResult] a URL => exception mapping. The exception part is nil if no errors were found.
-    def self.find_errors
-      statuses = VikiLinkBot::CheckResult.new(@ref_hosts, @acknowledged_errors)
-      lock = Mutex.new
-      threads = []
-      [*@monitored_hosts, *@ref_hosts].shuffle.each do |uri|
-        threads << Thread.new do
-          res = begin
-            redirects = 0
-            r = @httpc.head('https://' + uri)
-            while r.redirect?
-              redirects += 1
-              raise SocketError.new("trop de redirections (#{redirects})") if redirects > @max_redirects
-              r = @httpc.head(r.headers['Location'])  # retry
-            end
-            unless @ref_hosts.include?(uri)
-              [:check_http_status, :check_tls_cert].each { |f| send(f, r) }
-            end
-            nil
-          rescue HTTPClient::ReceiveTimeoutError
-            "délai d'attente écoulé (#{@httpc.receive_timeout} s)"
-          rescue => e
-            e.to_s.gsub(uri, '<domain>')
+    def self.make_domain_checker_thread(uri)
+      Thread.new do
+        begin
+          nb_redirects = 0
+          answer = @httpc.head('https://' + uri)
+          while answer.redirect?
+            nb_redirects += 1
+            fail SocketError, "trop de redirections (#{nb_redirects})" if nb_redirects > @max_redirects
+            answer = @httpc.head(answer.headers['Location']) # retry
           end
-          lock.synchronize do
-            # force stringification because it will be compared later
-            statuses[uri] = res.nil? ? nil : res.to_s
-          end
+          [:check_http_status, :check_tls_cert].each { |f| f.call(answer) }
+          DomainOK.new(uri)
+        rescue HTTPClient::ReceiveTimeoutError
+          DomainError.new(uri, @acknowledged_errors[uri], "délai d'attente écoulé (#{@httpc.receive_timeout} s)")
+        rescue HTTPClient::TimeoutError => e
+          UndeterminedResult.new(uri, e)
+        rescue => e
+          DomainError.new(uri, @acknowledged_errors[uri], e)
         end
       end
-      threads.each(&:join)
-      statuses
+    end
+
+    # Find potential errors for sites specified in @monitored_hosts.
+    # @return [VikiLinkBot::DomainStatusMap] a URL => exception mapping.
+    def self.find_errors
+      status_map = DomainStatusMap.new
+      all_statuses = []
+      domains_to_check = @monitored_hosts
+      2.times do
+        nth_wave = domains_to_check.shuffle.map! { |uri| make_domain_checker_thread(uri) }.map!(&:value)
+        all_statuses.concat(nth_wave)
+      end
+
+      # For each domain, combine the multiple results we got from above.
+      # Also, if we only have an UndeterminedResult, try again one last time.
+      with_status = all_statuses.group_by(&:uri)
+      with_status.each do |uri, results|
+        uri_result = results.find { |r| r.is_a?(DomainOK) } || results.last
+        status_map[uri] = uri_result.is_a?(UndeterminedResult) ?
+            make_domain_checker_thread(uri).value : # last chance
+            uri_result
+      end
+
+      status_map
     end
 
     def self.check_http_status(r)
-      raise "statut HTTP inattendu (#{r.status})" if r.status / 100 != 2
+      fail "statut HTTP inattendu (#{r.status})" if r.status / 100 != 2
     end
 
     def self.check_tls_cert(r)
       cert = r.peer_cert
-      raise 'pas de certificat TLS' if cert.nil?
+      fail 'pas de certificat TLS' if cert.nil?
 
       now = Time.now
       not_before, not_after = cert.not_before, cert.not_after
-      raise "certificat invalide : inutilisable avant #{not_before}" if not_before > now
-      raise "certificat invalide : inutilisable après #{not_after}" if not_after < now
+      fail "certificat invalide : inutilisable avant #{not_before}" if not_before > now
+      fail "certificat invalide : inutilisable après #{not_after}" if not_after < now
 
-      raise 'le certificat a changé' if cert.to_s != @expected_cert.to_s
+      fail 'le certificat a changé' if cert.to_s != @expected_cert.to_s
     end
 
   end
