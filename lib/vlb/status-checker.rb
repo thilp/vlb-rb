@@ -121,7 +121,7 @@ module VikiLinkBot
 
     def initialize(*)
       super
-      @in_progress = Mutex.new  # locked when a thread is performing checks; other threads then simply give up
+      @in_progress = false  # true when a thread is performing checks; other threads then simply give up
     end
 
     # Run the notify_all method each 20 seconds.
@@ -129,15 +129,24 @@ module VikiLinkBot
 
     # Check @monitored_hosts' statuses and alert all channels the bot is in if necessary.
     def notify_all
-      cls = self.class
-      @in_progress.try_synchronize do
-        errors = cls.find_errors
-        return if errors == cls.last_statuses
-        cls.last_statuses = errors
-        msg = "[VSC] #{errors}"
-        bot.channels.each do |chan|
-          chan.send(msg)
+      # Return early if another thread is already executing this method:
+      synchronize(:vsc) do
+        return if @in_progress
+        @in_progress = true
+      end
+      # If not, check whether the most recent domain statuses are different
+      # from the last recorded ones (in self.class.last_statuses):
+      begin
+        errors = self.class.find_errors
+        if errors != self.class.last_statuses
+          self.class.last_statuses = errors
+          msg = "[VSC] #{errors}"
+          bot.channels.each do |chan|
+            chan.send(msg)
+          end
         end
+      ensure
+        synchronize(:vsc) { @in_progress = false }
       end
     end
 
@@ -217,19 +226,6 @@ module VikiLinkBot
       fail "certificat invalide : inutilisable après #{not_after}" if not_after < now
 
       fail 'le certificat a changé' if cert.to_s != @expected_cert.to_s
-    end
-
-  end
-
-end
-
-class Mutex
-  def try_synchronize
-    return unless try_lock
-    begin
-      yield
-    ensure
-      unlock
     end
   end
 end
