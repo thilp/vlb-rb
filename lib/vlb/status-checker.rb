@@ -138,8 +138,8 @@ module VikiLinkBot
       begin
         errors = self.class.find_errors
         if errors != self.class.last_statuses
-          log("new errors are: #{errors.instance_eval { @statuses }.inspect}")
-          log("old errors are: #{self.class.last_statuses.inspect}")
+          log("new errors are: #{errors.instance_eval { @statuses.values }.sort_by(&:uri).inspect}")
+          log("old errors are: #{self.class.last_statuses.instance_eval { @statuses.values }.sort_by(&:uri).inspect}") if self.class.last_statuses
           self.class.last_statuses = errors
           msg = "[VSC] #{errors}"
           bot.channels.each do |chan|
