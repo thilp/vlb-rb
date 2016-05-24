@@ -17,14 +17,13 @@ module VikiLinkBot
     def ==(o)
       self.class == o.class &&
           self.uri == o.uri &&
-          self.acknowledged == o.acknowledged &&
           self.to_s == o.to_s
     end
 
     alias_method :eql?, :==
 
     def hash
-      @uri.hash ^ @acknowledged.hash ^ to_s.hash
+      @uri.hash ^ to_s.hash
     end
   end
 
