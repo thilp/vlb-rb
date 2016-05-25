@@ -145,16 +145,15 @@ module VikiLinkBot
       # If not, check whether the most recent domain statuses are different
       # from the last recorded ones (in self.class.last_statuses):
       begin
-        errors = self.class.find_errors
-        unless errors.same_problems_than?(self.class.last_statuses)
-          log("new errors are: #{errors.instance_eval { @statuses.values }.sort_by(&:uri).inspect}")
-          log("old errors are: #{self.class.last_statuses.instance_eval { @statuses.values }.sort_by(&:uri).inspect}") if self.class.last_statuses
-          self.class.last_statuses = errors
+        cls = self.class
+        errors = cls.find_errors
+        if cls.last_statuses && !errors.same_problems_than?(cls.last_statuses)
           msg = "[VSC] #{errors}"
           bot.channels.each do |chan|
             chan.send(msg)
           end
         end
+        cls.last_statuses = errors
       ensure
         synchronize(:vsc) { @in_progress = false }
       end
