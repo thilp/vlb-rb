@@ -7,17 +7,16 @@ module VikiLinkBot
 
   # Represents the result of a domain check: either success or failure.
   class DomainValidity
-    attr_reader :uri, :acknowledged
+    attr_reader :uri
 
     def initialize(uri)
       @uri = uri
-      @acknowledged = false
     end
 
     def ==(o)
       self.class == o.class &&
-          self.uri == o.uri &&
-          self.to_s == o.to_s
+        self.uri == o.uri &&
+        self.to_s == o.to_s
     end
 
     alias_method :eql?, :==
@@ -42,7 +41,11 @@ module VikiLinkBot
     def initialize(uri, acknowledged, err_msg)
       super(uri)
       @err = err_msg.to_s
-      @acknowledged = acknowledged && @err == acknowledged.err
+      @acknowledged = !!acknowledged && @err == acknowledged.err
+    end
+
+    def acknowledged?
+      @acknowledged
     end
 
     def to_s
@@ -69,16 +72,19 @@ module VikiLinkBot
       @statuses = {}
     end
 
+    def problems
+      @problems ||= @statuses.values.select { |status| status.is_a?(DomainError) }
+    end
+
     # Returns a string describing the statuses.
     # @return [String]
     def to_s
-      problems = @statuses.select { |_, status| status.is_a?(DomainError) }
-      return Cinch::Formatting.format(:green, '✓') if problems.empty?
+      return Cinch::Formatting.format(:green, '✓') if problems.none?
 
-      non_ack = problems.reject { |_, status| status.acknowledged }
-      return random_green_monkey if non_ack.empty?
+      relevant_problems = problems.reject(&:acknowledged?)
+      return random_green_monkey if relevant_problems.none?
 
-      non_ack.values.group_by(&:to_s).
+      relevant_problems.group_by(&:to_s).
           map { |msg, errs| "#{errs.map(&:uri).join(', ')}: " + Cinch::Formatting.format(:red, msg) }.
           join(' | ')
     end
@@ -95,10 +101,13 @@ module VikiLinkBot
       Cinch::Formatting.format(:green, (0x1F648..0x1F64A).to_a.shuffle.take(1).pack('U'))
     end
 
-    def ==(other)
-      other.class == self.class && other.instance_eval { @statuses } == @statuses
+    def same_problems_than?(other)
+      sp, op = self.problems, other.problems
+      sp.count == op.count &&
+        sp.sort_by(&:uri) == op.sort_by(&:uri)
     end
   end
+
 
   class StatusChecker
     include Cinch::Plugin
@@ -137,7 +146,7 @@ module VikiLinkBot
       # from the last recorded ones (in self.class.last_statuses):
       begin
         errors = self.class.find_errors
-        if errors != self.class.last_statuses
+        unless errors.same_problems_than?(self.class.last_statuses)
           log("new errors are: #{errors.instance_eval { @statuses.values }.sort_by(&:uri).inspect}")
           log("old errors are: #{self.class.last_statuses.instance_eval { @statuses.values }.sort_by(&:uri).inspect}") if self.class.last_statuses
           self.class.last_statuses = errors
