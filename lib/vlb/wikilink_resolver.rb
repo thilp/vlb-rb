@@ -68,12 +68,7 @@ module VikiLinkBot
     end
 
     def self.update_wikilink_states(links)
-      wikis = {}
-      links.each { |link| (wikis[link.wiki] ||= []) << link if link.state == 1 }  # Builds a {wiki => [links]} map
-      wikis.each do |wiki, link_list|
-        states = wiki.page_states(*link_list.map(&:pagename))
-        link_list.each { |link| link.state = states[link.pagename] }
-      end
+      WikiLinkSet.new.concat(links).compute_states!
     end
 
   end

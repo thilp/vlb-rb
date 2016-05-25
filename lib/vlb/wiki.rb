@@ -128,21 +128,6 @@ class Wiki
   def domain
     @base_url.host
   end
-
-  def page_states(*pages)
-    answer = intercept(nil) { api action: 'query', prop: 'info', indexpageids: 1, titles: pages.join('|') }
-    if answer.nil? || answer['query'].nil? || answer['query']['pageids'].nil?
-      Hash[pages.map { |p| [p, 502] }]  # 502 Bad Gateway
-    else
-      states = {}
-      pages.zip answer['query']['pageids'] do |name, pageid|
-        pagedata = answer['query']['pages'][pageid]
-        states[name] = pagedata['missing'] ? 404 : pagedata['redirect'] ? 301 : 200
-      end
-      states
-    end
-  end
-
 end
 
 
@@ -166,5 +151,45 @@ class Wikilink
       url.to_s
     end
   end
+end
 
+class WikiLinkSet
+  def initialize
+    @links = []
+  end
+
+  def <<(link)
+    @links << link
+    self
+  end
+
+  def concat(links)
+    @links.concat(links)
+    self
+  end
+
+  def compute_states!
+    threads = @links.group_by(&:wiki).map do |wiki, links|
+      Thread.new do
+        name_to_link = links.map { |x| [x.pagename, x] }.to_h
+        answer = intercept(nil) do
+          wiki.api(action: 'query', prop: 'info', indexpageids: 1, titles: name_to_link.keys.join('|'))
+        end
+        if (pageids = answer.dig('query', 'pageids'))
+          altnames = answer['query']['normalized']
+          altnames = altnames.nil? ? {} : altnames.map { |a| [a['to'], a['from']] }.to_h
+          pageids.each do |pid|
+            pagedata = answer['query']['pages'][pid]
+            used_names = [ altnames[pagedata['title']], pagedata['title'] ].select { |n| name_to_link.include?(n) }
+            state = pagedata['missing'] ? 404 : pagedata['redirect'] ? 301 : 200
+            name_to_link.values_at(*used_names).each { |x| x.state = state }
+          end
+        else # 502 Bad Gateway
+          links.each { |x| x.state = 502 }
+        end
+      end
+    end
+    threads.each(&:join)
+    nil
+  end
 end
