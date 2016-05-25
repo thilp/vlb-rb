@@ -147,13 +147,13 @@ module VikiLinkBot
       begin
         cls = self.class
         errors = cls.find_errors
-        if cls.last_statuses && !errors.same_problems_than?(cls.last_statuses)
+        if cls.last_statuses.nil? || errors.same_problems_than?(cls.last_statuses)
           msg = "[VSC] #{errors}"
           bot.channels.each do |chan|
             chan.send(msg)
           end
+          cls.last_statuses = errors
         end
-        cls.last_statuses = errors
       ensure
         synchronize(:vsc) { @in_progress = false }
       end
