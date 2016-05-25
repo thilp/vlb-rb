@@ -147,7 +147,7 @@ module VikiLinkBot
       begin
         cls = self.class
         errors = cls.find_errors
-        if cls.last_statuses.nil? || errors.same_problems_than?(cls.last_statuses)
+        if cls.last_statuses.nil? || !errors.same_problems_than?(cls.last_statuses)
           msg = "[VSC] #{errors}"
           bot.channels.each do |chan|
             chan.send(msg)
