@@ -1,4 +1,5 @@
 ---
+title: Home
 ---
 VikiLinkBot (often abbreviated to “vlb”) is a bot, i.e. a program that provides
 [Vikidia](https://www.vikidia.org)-related information to its users:
