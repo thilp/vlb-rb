@@ -4,15 +4,13 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
 
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+    <link rel="stylesheet" type="text/css" href="{{ site.github.url }}/stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="{{ site.github.url }}/stylesheets/github-dark.css" media="screen">
 
-    <title>vlb-rb by thilp</title>
+    <title>{{ page.title }}</title>
   </head>
 
   <body>
-
     <header>
       <div class="container">
         <h1>vlb-rb</h1>
@@ -26,17 +24,8 @@
       </div>
     </header>
 
-    <div class="container">
-      <section id="main_content">
-        <ul>
-<li>  <a href="https://github.com/thilp/vlb-rb/wiki">Documentation</a>
-</li>
-<li>  <a href="https://github.com/thilp/vlb-rb/blob/master/LICENSE">Licence</a>
-</li>
-</ul>
-      </section>
+    <div class="container" id="main_content">
+      {{ content }}
     </div>
-
-    
   </body>
 </html>
